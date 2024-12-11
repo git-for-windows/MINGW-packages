@@ -5,8 +5,8 @@ pkgbase=mingw-w64-${_realname}
 pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}"
          "${MINGW_PACKAGE_PREFIX}-${_realname}-gnutls"
          "${MINGW_PACKAGE_PREFIX}-${_realname}-winssl")
-pkgver=8.11.0
-pkgrel=2
+pkgver=8.11.1
+pkgrel=1
 pkgdesc="Command line tool and library for transferring data with URLs (mingw-w64)"
 arch=('any')
 mingw_arch=('mingw32' 'mingw64' 'ucrt64' 'clang64' 'clang32' 'clangarm64')
@@ -38,7 +38,7 @@ source=("https://github.com/curl/curl/releases/download/${_realname}-${pkgver//.
         "0002-Hack-make-relocation-work-inside-libexec-git-core-an.patch"
         "netrc-regression-1.patch::https://github.com/curl/curl/commit/f5c616930b5cf148b1b2632da4f5963ff48bdf88.patch"
         "netrc-regression-2.patch::https://github.com/curl/curl/commit/0cdde0fdfbeb8c35420f6d03fa4b77ed73497694.patch")
-sha256sums=('c95d5a1368803729345a632ce42cceeefd5f09c3b4d9582f858f6779f4b8b254'
+sha256sums=('e9773ad1dfa21aedbfe8e1ef24c9478fa780b1b3d4f763c98dd04629b5e43485'
             'SKIP'
             '08209cbf1633fa92eae7e5d28f95f8df9d6184cc20fa878c99aec4709bb257fd'
             '965d3921ec4fdeec94a2718bc2c85ce5e1a00ea0e499330a554074a7ae15dfc6'
