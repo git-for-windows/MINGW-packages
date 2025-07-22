@@ -4,7 +4,7 @@ _realname=openssl
 pkgbase=mingw-w64-${_realname}
 pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}"
 	"${MINGW_PACKAGE_PREFIX}-${_realname}-pdb")
-pkgver=3.2.4
+pkgver=3.5.1
 pkgrel=1
 pkgdesc="The Open Source toolkit for Secure Sockets Layer and Transport Layer Security (mingw-w64)"
 arch=('any')
@@ -25,12 +25,12 @@ source=("https://github.com/openssl/openssl/releases/download/openssl-${pkgver}/
         '0001-test_rand-use-the-better-chomp.patch'
         'pathtools.c'
         'pathtools.h')
-sha256sums=('b23ad7fd9f73e43ad1767e636040e88ba7c9e5775bfa5618436a0dd2c17c3716'
+sha256sums=('529043b15cffa5f36077a4d0af83f3de399807181d607441d734196d889b641f'
             'SKIP'
             '21b96771b401442570e885c2d5689a359a91e86dcbf5511db3667202b6c1fa8a'
-            '8a2d91826bd1a8fd6d3a981d2a71cfb3170060f64a053eafd8e3b32f6a30ac3b'
+            'b1f7590d3d08175ca7d0432160750df65755a57460125852e20c031599c0c52c'
             'f80607b2d59b97648952fb3b8de0e3423f023d67331e0e02696e27fbcf84774c'
-            '56fcd20131ae0c563db18ae00c6ba3b95cd9cb1e9934548079284ba3f52ad250'
+            'b8abf28baea3bd2a5107fb79615c5763cd9c650dab8df846b02c80450fb0dca5'
             '08209cbf1633fa92eae7e5d28f95f8df9d6184cc20fa878c99aec4709bb257fd'
             '965d3921ec4fdeec94a2718bc2c85ce5e1a00ea0e499330a554074a7ae15dfc6')
 
@@ -77,6 +77,8 @@ prepare() {
 
   cp -fHv "${srcdir}"/pathtools.c crypto/
   cp -fHv "${srcdir}"/pathtools.h ./
+  unix2dos test/recipes/**/*.pem
+  unix2dos test/recipes/**/*.txt
 }
 
 build() {
