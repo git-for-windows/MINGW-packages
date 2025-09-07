@@ -28,9 +28,9 @@ source=("https://github.com/openssl/openssl/releases/download/openssl-${pkgver}/
 sha256sums=('c53a47e5e441c930c3928cf7bf6fb00e5d129b630e0aa873b08258656e7345ec'
             'SKIP'
             '21b96771b401442570e885c2d5689a359a91e86dcbf5511db3667202b6c1fa8a'
-            '8a2d91826bd1a8fd6d3a981d2a71cfb3170060f64a053eafd8e3b32f6a30ac3b'
+            'f3d90cbda3623e1520b887e1bad7b2b2c4891f6c970a85f50cc6818586722661'
             'f80607b2d59b97648952fb3b8de0e3423f023d67331e0e02696e27fbcf84774c'
-            '56fcd20131ae0c563db18ae00c6ba3b95cd9cb1e9934548079284ba3f52ad250'
+            '0bf4faa36288a06c7b46b34ab551f6bc4cdac9cac934202d5ad1c8a8d14ccfcc'
             '08209cbf1633fa92eae7e5d28f95f8df9d6184cc20fa878c99aec4709bb257fd'
             '965d3921ec4fdeec94a2718bc2c85ce5e1a00ea0e499330a554074a7ae15dfc6')
 

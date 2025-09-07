@@ -18,7 +18,7 @@ diff --git a/test/recipes/05-test_rand.t b/test/recipes/05-test_rand.t
 index aa012c1..f2c1374 100644
 --- a/test/recipes/05-test_rand.t
 +++ b/test/recipes/05-test_rand.t
-@@ -28,13 +28,13 @@ SKIP: {
+@@ -36,17 +36,17 @@ SKIP: {
  
      @randdata = run(app(['openssl', 'rand', '-engine', 'ossltest', '-hex', '16' ]),
                      capture => 1, statusvar => \$success);
@@ -27,6 +27,11 @@ index aa012c1..f2c1374 100644
      ok($success && $randdata[0] eq $expected,
         "rand with ossltest: Check rand output is as expected");
  
+     @randdata = run(app(['openssl', 'rand', '-hex', '2K' ]),
+                     capture => 1, statusvar => \$success);
+-    chomp(@randdata);
++    $_ =~ s|\R+$|| for @randdata;
+
      @randdata = run(app(['openssl', 'rand', '-engine', 'dasync', '-hex', '16' ]),
                      capture => 1, statusvar => \$success);
 -    chomp(@randdata);
