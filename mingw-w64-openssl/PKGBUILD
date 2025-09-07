@@ -4,7 +4,7 @@ _realname=openssl
 pkgbase=mingw-w64-${_realname}
 pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}"
 	"${MINGW_PACKAGE_PREFIX}-${_realname}-pdb")
-pkgver=3.2.4
+pkgver=3.5.2
 pkgrel=1
 pkgdesc="The Open Source toolkit for Secure Sockets Layer and Transport Layer Security (mingw-w64)"
 arch=('any')
@@ -25,7 +25,7 @@ source=("https://github.com/openssl/openssl/releases/download/openssl-${pkgver}/
         '0001-test_rand-use-the-better-chomp.patch'
         'pathtools.c'
         'pathtools.h')
-sha256sums=('b23ad7fd9f73e43ad1767e636040e88ba7c9e5775bfa5618436a0dd2c17c3716'
+sha256sums=('c53a47e5e441c930c3928cf7bf6fb00e5d129b630e0aa873b08258656e7345ec'
             'SKIP'
             '21b96771b401442570e885c2d5689a359a91e86dcbf5511db3667202b6c1fa8a'
             '8a2d91826bd1a8fd6d3a981d2a71cfb3170060f64a053eafd8e3b32f6a30ac3b'
