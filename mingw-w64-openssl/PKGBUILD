@@ -22,6 +22,7 @@ source=("https://github.com/openssl/openssl/releases/download/openssl-${pkgver}/
         '001-support-aarch64.patch'
         '002-relocation.patch'
         '003-mingw32-broken-test.patch'
+        '004-fix-text-comparison.patch'
         '0001-test_rand-use-the-better-chomp.patch'
         'pathtools.c'
         'pathtools.h')
@@ -30,6 +31,7 @@ sha256sums=('c53a47e5e441c930c3928cf7bf6fb00e5d129b630e0aa873b08258656e7345ec'
             '21b96771b401442570e885c2d5689a359a91e86dcbf5511db3667202b6c1fa8a'
             'f3d90cbda3623e1520b887e1bad7b2b2c4891f6c970a85f50cc6818586722661'
             'f80607b2d59b97648952fb3b8de0e3423f023d67331e0e02696e27fbcf84774c'
+            'c1035d294993fdaf956a578464c51350de72c809c2165f23ca896df04c2bb09e'
             '0bf4faa36288a06c7b46b34ab551f6bc4cdac9cac934202d5ad1c8a8d14ccfcc'
             '08209cbf1633fa92eae7e5d28f95f8df9d6184cc20fa878c99aec4709bb257fd'
             '965d3921ec4fdeec94a2718bc2c85ce5e1a00ea0e499330a554074a7ae15dfc6')
@@ -60,7 +62,8 @@ prepare() {
   apply_patch_with_msg \
      001-support-aarch64.patch \
      002-relocation.patch \
-     0001-test_rand-use-the-better-chomp.patch
+     0001-test_rand-use-the-better-chomp.patch \
+     004-fix-text-comparison.patch
 
   if [[ "$MSYSTEM" == MINGW32 ]]
   then
