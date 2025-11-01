@@ -29,7 +29,7 @@ index d56bfb41..6dacdc54 100644
  
  #ifdef WIN32
 -(void)fflush(stdout);
--result = _spawnvp(_P_WAIT, argsvector[0], (const char * const *)argsvector);
+-result = _spawnvp(_P_WAIT, argsvector[0], (const char * const *)argsvector) != 0;
 +  {
 +    size_t size = 0, count = 1;
 +    wchar_t **w0, *w1, **wargv;

@@ -3,7 +3,7 @@
 _realname=pcre2
 pkgbase=mingw-w64-${_realname}
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=10.46
+pkgver=10.47
 pkgrel=1
 pkgdesc="A library that implements Perl 5-style regular expressions (mingw-w64)"
 arch=('any')
@@ -25,12 +25,12 @@ source=(https://github.com/PhilipHazel/pcre2/releases/download/${_realname}-${pk
         0005-RunGrepTest-work-around-Unix-vs-Windows-path-issues.patch
         0006-RunGrepTest-Windows-does-not-have-a-bin-echo.patch
         0007-RunGrepTest-work-around-MSYS2-idiosyncrasy.patch)
-sha256sums=('15fbc5aba6beee0b17aecb04602ae39432393aba1ebd8e39b7cabf7db883299f'
+sha256sums=('47fe8c99461250d42f89e6e8fdaeba9da057855d06eb7fc08d9ca03fd08d7bc7'
             'SKIP'
             'd3c8b81d51b3de2fa60d62625771bcec3ab7f4c2365a400ab4c94fcbafe81de9'
             '1746e53b28c6e670c4375dc325a7707f65c7b9e37af870949886cab5723855ef'
             '4d672ef554d1c371738d2afb6cde4b8d280d6ce8cf110c3f81a2de77d1462c44'
-            'c17b7b63f218083b680214b3f767efbe9d6543d85438136fc4aa4a0f212ace9c'
+            '469a4062e5852e56aaa909a8634da765e563eb6c93fbb5f7719d6206ad7d1806'
             'a5722abc0cf3cbdacaffb0e8f78bae3f8821908456079c76131511feacd35661'
             'c6dadfe24bcd669ad56e2a47d45a62bc9c1affe4319c45bc9e30efdf77a1c15b'
             '47db0aa514176f679e692b780753f473e9c2b66a737fdf635e03b6ec0f9f00d6')
