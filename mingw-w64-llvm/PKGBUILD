@@ -27,7 +27,7 @@ pkgname=("${MINGW_PACKAGE_PREFIX}-llvm"
          "${MINGW_PACKAGE_PREFIX}-compiler-rt"
          $( (( _clangprefix )) && echo "${MINGW_PACKAGE_PREFIX}-gcc-compat" )
          "${MINGW_PACKAGE_PREFIX}-lld")
-_pkgver=21.1.5
+_pkgver=21.1.8
 pkgver=${_pkgver/-/}
 pkgrel=2
 pkgdesc="C language family frontend for LLVM (mingw-w64)"
@@ -76,19 +76,19 @@ source=("${_url}/llvm-${_pkgver}.src.tar.xz"{,.sig}
         # 0401-0499 -> clang-tools-extra
         # 0901-0999 -> whole tree
         )
-sha256sums=('c9d6ca5073255192850471a276b3a00a6555c6dd09df6cb3eab77801f0a1cae0'
+sha256sums=('d9022ddadb40a15015f6b27e6549a7144704ded8828ba036ffe4b8165707de21'
             'SKIP'
-            'eee4de3b3f01ea6dd6b0936ac8be319eef0a65d0022def258c70110e3743807c'
+            '6090e3f23720d003cdd84483a47d0eec6d01adbb5e0c714ac0c8b58de546aa62'
             'SKIP'
-            '1553845143a0a5dea7da23e2ea09f4815411e24b5908b208b191917dc011f314'
+            '6ddb7e731bf09ab821132e2e8a3c706b6d9c52c92a9ce9a9ed0976a9c6c28829'
             'SKIP'
-            '967c2afba250b325ba4482b12a819ef8cbee178eed45d7b5e14f0368b05adedf'
+            'dd54ae21aee1780fac59445b51ebff601ad016b31ac3a7de3b21126fd3ccb229'
             'SKIP'
-            '2bcbb2b12af99fc3292d2a415e5678de0bee7182712d7deb89a7e0a52704a210'
+            'd9524c5ee952500a2af92c27042a0d90ab089962af47816d4c85d0ebf76373d1'
             'SKIP'
-            '48013d5714a96419bf993a2e5e4c5827377e8cf9c565070731fb2305d50d9511'
+            '85735f20fd8c81ecb0a09abb0c267018475420e93b65050cc5b7634eab744de9'
             'SKIP'
-            '4ccc00ec2e7bd0cc121eaa34fa25a0480bfb8a5722faf1694720e0be99b753e6'
+            '7fe99424384aea529ffaeec9cc9dfb8b451fd1852c03fc109e426fe208a1f1a7'
             'SKIP'
             'eb03df53671df6627768141b3aaa76abe176a14e5e47911c97bec544387c4aff'
             'd77d47e37e4948f5c01ae8bc05fb4e879b6516132c5a60c7bc820c9cbbb39668'
