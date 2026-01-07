@@ -32,14 +32,15 @@ diff --git a/configure.ac b/configure.ac
 index cc16f4120..827d04948 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -4069,6 +4069,7 @@ dnl default includes
+@@ -4069,6 +4069,8 @@ dnl default includes
  ]
  )
  
 +AC_DEFINE_UNQUOTED(CURL_BINDIR, "${prefix}/bin", [bindir])
- 
++
  dnl Checks for typedefs, structures, and compiler characteristics.
  AC_C_CONST
+ AC_TYPE_SIZE_T
 diff --git a/lib/Makefile.inc b/lib/Makefile.inc
 index 8b506febc..841e8a7ea 100644
 --- a/lib/Makefile.inc
@@ -78,18 +79,17 @@ diff --git a/lib/vtls/vtls.c b/lib/vtls/vtls.c
 index df0449cbe..bb45551b0 100644
 --- a/lib/vtls/vtls.c
 +++ b/lib/vtls/vtls.c
-@@ -81,6 +81,10 @@
+@@ -77,6 +77,9 @@
  #include <Security/Security.h>
  #endif
  
 +#if defined(__MINGW32__)
 +#include "../pathtools.h"
 +#endif
-+
- /* The last #include files should be: */
- #include "../curl_memory.h"
- #include "../memdebug.h"
-@@ -297,6 +301,15 @@ CURLcode Curl_ssl_easy_config_complete(struct Curl_easy *data)
+ 
+ #define CLONE_STRING(var)                    \
+   do {                                       \
+@@ -295,6 +299,15 @@ CURLcode Curl_ssl_easy_config_complete(struct Curl_easy *data)
  #if defined(CURL_CA_PATH) || defined(CURL_CA_BUNDLE)
    struct UserDefined *set = &data->set;
    CURLcode result;
@@ -105,7 +105,7 @@ index df0449cbe..bb45551b0 100644
  #endif
  
    if(Curl_ssl_backend() != CURLSSLBACKEND_SCHANNEL) {
-@@ -305,16 +318,42 @@ CURLcode Curl_ssl_easy_config_complete(struct Curl_easy *data)
+@@ -302,15 +317,41 @@ CURLcode Curl_ssl_easy_config_complete(struct Curl_easy *data)
        sslc->native_ca_store = TRUE;
  #endif
  #ifdef CURL_CA_PATH
@@ -127,7 +127,6 @@ index df0449cbe..bb45551b0 100644
        if(result)
          return result;
      }
-     sslc->primary.CApath = data->set.str[STRING_SSL_CAPATH];
  #endif
  #ifdef CURL_CA_BUNDLE
 +#ifdef __MINGW32__
