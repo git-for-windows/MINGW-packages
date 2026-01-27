@@ -4,7 +4,7 @@ _realname=openssl
 pkgbase=mingw-w64-${_realname}
 pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}"
 	"${MINGW_PACKAGE_PREFIX}-${_realname}-pdb")
-pkgver=3.5.4
+pkgver=3.5.5
 pkgrel=1
 pkgdesc="The Open Source toolkit for Secure Sockets Layer and Transport Layer Security (mingw-w64)"
 arch=('any')
@@ -26,9 +26,10 @@ source=("https://github.com/openssl/openssl/releases/download/openssl-${pkgver}/
         '0005-Fix-Text-comparison.patch'
         '0006-Mangle-Absolute-path.patch'
         '0007-Fix-OS-detection.patch'
+        '0008-Define-SIO_UDP_NETRESET-if-necessary.patch'
         'pathtools.c'
         'pathtools.h')
-sha256sums=('967311f84955316969bdb1d8d4b983718ef42338639c621ec4c34fddef355e99'
+sha256sums=('b28c91532a8b65a1f983b4c28b7488174e4a01008e29ce8e69bd789f28bc2a89'
             'SKIP'
             'baaaab0e91caf5690d4a264146cff2030bb5852ad14712d7f89e7e072533ae11'
             'a45ab8e18db920e8c559d80598664cfb52d2f4e09653f4caaa0f4de0055982cf'
@@ -37,6 +38,7 @@ sha256sums=('967311f84955316969bdb1d8d4b983718ef42338639c621ec4c34fddef355e99'
             '52a4c65eb0af1a8319e2ece6e714ae6130f27bd46ba8d40966428694d64728ed'
             'eca965cb6761cfa294857fd85eef4aa27fdc7e322ebcd88a1b67c4c668be7121'
             'a00fe4dbc0c5848ccb1b205e3aae2dccd5246745e517e74349dfdb3b25968047'
+            'f2d2fec8009fc0acd291329b7de97b8b4082587e22cc4d95cd6cb0a858b46aa1'
             '08209cbf1633fa92eae7e5d28f95f8df9d6184cc20fa878c99aec4709bb257fd'
             '965d3921ec4fdeec94a2718bc2c85ce5e1a00ea0e499330a554074a7ae15dfc6')
 
@@ -69,7 +71,8 @@ prepare() {
      0003-test_rand-use-the-better-chomp.patch \
      0005-Fix-Text-comparison.patch \
      0006-Mangle-Absolute-path.patch \
-     0007-Fix-OS-detection.patch
+     0007-Fix-OS-detection.patch \
+     0008-Define-SIO_UDP_NETRESET-if-necessary.patch
 
   if [[ "$MSYSTEM" == MINGW32 ]]
   then
