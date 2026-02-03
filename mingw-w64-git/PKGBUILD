@@ -60,7 +60,7 @@ export GIT_CONFIG_PARAMETERS="${GIT_CONFIG_PARAMETERS:+$GIT_CONFIG_PARAMETERS }'
 
 sha256sums=('5f624e2511c445b832d9bbd65a74c27630be79994bf38dde4a4f8013d89e60e0'
             'a9dcba5aebc93ae7aacdee03275780fc6c0f15e88fda30c93041e75851e75090'
-            'f16b345aba17acd124ab5940635dfa2d87445df73eedbeb80e0285f29c85415a'
+            '7e6c5f3dc6a4209dca0e1f38880b2978500a5c745c04bc60dbeda5fc48e8d3cb'
             '80b0b11efe5a2f9b4cd92f28c260d0b3aad8b809c34ed95237c59b73e08ade0b'
             '20613488bbd66bced2ef786448dc335c9cc7a5ef8be800e0d5bab83e36faf584'
             'dab3e41e935a33f443a4ff4ef4ce92c191b6d952d9eb37e14885540ad5af99ed'
