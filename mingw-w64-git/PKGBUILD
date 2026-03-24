@@ -541,7 +541,6 @@ package_git-for-windows-addons () {
     "${MINGW_PACKAGE_PREFIX}-${_realname}-subtree"
     "${MINGW_PACKAGE_PREFIX}-${_realname}-credential-wincred"
     "${MINGW_PACKAGE_PREFIX}-${_realname}-send-email"
-    "${MINGW_PACKAGE_PREFIX}-${_realname}-svn"
     "${MINGW_PACKAGE_PREFIX}-gitk"
     "${MINGW_PACKAGE_PREFIX}-${_realname}-gui")
   pkgdesc="Git for Windows extra executables and wrappers (mingw-w64)"
