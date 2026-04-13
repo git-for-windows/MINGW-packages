@@ -1,7 +1,7 @@
-From 80b680d4796d1ce913185dbaf4c36c6a64669e86 Mon Sep 17 00:00:00 2001
+From b0761795838b6645cf1bc7d0c290decc1f57b4ca Mon Sep 17 00:00:00 2001
 From: Ray Donnelly <mingw.android@gmail.com>
 Date: Wed, 22 Feb 2017 11:03:04 +0100
-Subject: [PATCH 1/2] Make cURL relocatable
+Subject: [PATCH 1/4] Make cURL relocatable
 
 This adds the ability to specify CA_BUNDLE paths that are relative to
 the MSYS2 pseudo-root directory.
@@ -22,17 +22,17 @@ be copied from `mingw-w64-pathtools` into `lib/`.
 Original-patch-by: Ray Donnelly <mingw.android@gmail.com>
 Signed-off-by: Johannes Schindelin <johannes.schindelin@gmx.de>
 ---
- configure.ac         |  1 +
+ configure.ac         |  2 ++
  lib/Makefile.inc     |  2 ++
  lib/curl_config.h.in |  3 +++
- lib/vtls/vtls.c      | 49 ++++++++++++++++++++++++++++++++++++++++++++
+ lib/vtls/vtls.c      | 48 ++++++++++++++++++++++++++++++++++++++++++++
  4 files changed, 55 insertions(+)
 
 diff --git a/configure.ac b/configure.ac
-index cc16f4120..827d04948 100644
+index 6d2cb5583b..cefba6bb1b 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -4069,6 +4069,8 @@ dnl default includes
+@@ -4035,6 +4035,8 @@ dnl default includes
  ]
  )
  
@@ -42,10 +42,10 @@ index cc16f4120..827d04948 100644
  AC_C_CONST
  AC_TYPE_SIZE_T
 diff --git a/lib/Makefile.inc b/lib/Makefile.inc
-index 8b506febc..841e8a7ea 100644
+index 84b4e5425b..8c9010e51a 100644
 --- a/lib/Makefile.inc
 +++ b/lib/Makefile.inc
-@@ -229,6 +229,7 @@ LIB_CFILES =         \
+@@ -233,6 +233,7 @@ LIB_CFILES =         \
    noproxy.c          \
    openldap.c         \
    parsedate.c        \
@@ -53,7 +53,7 @@ index 8b506febc..841e8a7ea 100644
    pingpong.c         \
    pop3.c             \
    progress.c         \
-@@ -361,6 +362,7 @@ LIB_HFILES =         \
+@@ -359,6 +360,7 @@ LIB_HFILES =         \
    netrc.h            \
    noproxy.h          \
    parsedate.h        \
@@ -62,10 +62,10 @@ index 8b506febc..841e8a7ea 100644
    pop3.h             \
    progress.h         \
 diff --git a/lib/curl_config.h.in b/lib/curl_config.h.in
-index 668be5ea1..9c3139764 100644
+index 7108da0790..9dbbfb3666 100644
 --- a/lib/curl_config.h.in
 +++ b/lib/curl_config.h.in
-@@ -14,6 +14,9 @@
+@@ -17,6 +17,9 @@
  /* If safe CA bundle search is enabled */
  #undef CURL_CA_SEARCH_SAFE
  
@@ -76,7 +76,7 @@ index 668be5ea1..9c3139764 100644
  #undef CURL_DEFAULT_SSL_BACKEND
  
 diff --git a/lib/vtls/vtls.c b/lib/vtls/vtls.c
-index df0449cbe..bb45551b0 100644
+index f7201d18d6..b4a0547a8c 100644
 --- a/lib/vtls/vtls.c
 +++ b/lib/vtls/vtls.c
 @@ -77,6 +77,9 @@
@@ -89,7 +89,7 @@ index df0449cbe..bb45551b0 100644
  
  #define CLONE_STRING(var)                    \
    do {                                       \
-@@ -295,6 +299,15 @@ CURLcode Curl_ssl_easy_config_complete(struct Curl_easy *data)
+@@ -297,6 +300,15 @@ CURLcode Curl_ssl_easy_config_complete(struct Curl_easy *data)
  #if defined(CURL_CA_PATH) || defined(CURL_CA_BUNDLE)
    struct UserDefined *set = &data->set;
    CURLcode result;
@@ -105,7 +105,7 @@ index df0449cbe..bb45551b0 100644
  #endif
  
    if(Curl_ssl_backend() != CURLSSLBACKEND_SCHANNEL) {
-@@ -302,15 +317,41 @@ CURLcode Curl_ssl_easy_config_complete(struct Curl_easy *data)
+@@ -305,15 +317,41 @@ CURLcode Curl_ssl_easy_config_complete(struct Curl_easy *data)
        sslc->native_ca_store = TRUE;
  #endif
  #ifdef CURL_CA_PATH
@@ -147,7 +147,7 @@ index df0449cbe..bb45551b0 100644
        if(result)
          return result;
      }
-@@ -353,8 +392,13 @@ CURLcode Curl_ssl_easy_config_complete(struct Curl_easy *data)
+@@ -352,16 +390,26 @@ CURLcode Curl_ssl_easy_config_complete(struct Curl_easy *data)
  #endif
  #ifdef CURL_CA_PATH
      if(!sslc->custom_capath && !set->str[STRING_SSL_CAPATH_PROXY]) {
@@ -161,7 +161,6 @@ index df0449cbe..bb45551b0 100644
        if(result)
          return result;
      }
-@@ -362,8 +406,13 @@ CURLcode Curl_ssl_easy_config_complete(struct Curl_easy *data)
  #endif
  #ifdef CURL_CA_BUNDLE
      if(!sslc->custom_cafile && !set->str[STRING_SSL_CAFILE_PROXY]) {

@@ -1,0 +1,76 @@
+From cab1cced8a4c48054183192a80d09112d788e868 Mon Sep 17 00:00:00 2001
+From: Matthew John Cheetham <mjcheetham@outlook.com>
+Date: Mon, 23 Mar 2026 13:34:27 +0000
+Subject: [PATCH 4/4] spnego(windows): disallow NTLM via SPNEGO
+
+SPNEGO (Negotiate) authentication can silently fall back to NTLM when
+Kerberos is unavailable. This is undesirable because:
+
+1. Kerberos is supposed to be a strong authentication method, and
+   allowing to downgrade it to NTLM weakens that.
+
+2. If the caller wants to allow or disallow NTLM authentication, they
+   can do so explicitly; But with NTLM via SPNEGO, there is no such
+   option.
+
+3. The cURL project deprecated NTLM support and plans on removing it in
+   September 2026 altogether. If NTLM via SPNEGO was still supported,
+   that would seriously sabotage the security implications of this plan.
+
+With this patch, libcurl checks the sub-mechanism selected by SPNEGO
+after the security context is initialized but before any tokens are
+sent on the wire. If NTLM was chosen, the authentication fails with
+CURLE_AUTH_ERROR.
+
+Bare NTLM auth (CURLAUTH_NTLM) is not affected.
+
+Note that this patch only changes the Windows (SSPI) side by restricting
+SSPI from using NTLM by specifying the special string "!ntlm" in the
+PackageList field of the SEC_WINNT_AUTH_IDENTITY_EX structure. A more
+comprehensive solution that includes GSS-API is being developed in
+https://github.com/curl/curl/pull/21076.
+
+Signed-off-by: Matthew John Cheetham <mjcheetham@outlook.com>
+Signed-off-by: Johannes Schindelin <johannes.schindelin@gmx.de>
+---
+ lib/vauth/spnego_sspi.c | 27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
+
+diff --git a/lib/vauth/spnego_sspi.c b/lib/vauth/spnego_sspi.c
+index 1f73123a0d..57d7599361 100644
+--- a/lib/vauth/spnego_sspi.c
++++ b/lib/vauth/spnego_sspi.c
+@@ -146,6 +146,33 @@ CURLcode Curl_auth_decode_spnego_message(struct Curl_easy *data,
+       /* Use the current Windows user */
+       nego->p_identity = NULL;
+ 
++    /* Disallow NTLM via SPNEGO */ {
++      /* Exclude NTLM from SPNEGO negotiation via the PackageList field */
++      if(!nego->p_identity) {
++        memset(&nego->identity, 0, sizeof(nego->identity));
++        nego->identity.Version = SEC_WINNT_AUTH_IDENTITY_VERSION;
++        nego->identity.Length = sizeof(nego->identity);
++        nego->identity.Flags =
++#ifdef UNICODE
++          SEC_WINNT_AUTH_IDENTITY_UNICODE;
++#else
++          SEC_WINNT_AUTH_IDENTITY_ANSI;
++#endif
++        nego->p_identity = &nego->identity;
++      }
++
++      /* Use the special name "!ntlm" to prevent NTLM from being used:
++       * https://learn.microsoft.com/en-us/windows/win32/api/sspi/ns-sspi-sec_winnt_auth_identity_exa
++       */
++      nego->identity.PackageList =
++#ifdef UNICODE
++        (unsigned short *)CURL_UNCONST(TEXT("!ntlm"));
++#else
++        (unsigned char *)CURL_UNCONST(TEXT("!ntlm"));
++#endif
++      nego->identity.PackageListLength = 5;
++    }
++
+     /* Allocate our credentials handle */
+     nego->credentials = curlx_calloc(1, sizeof(CredHandle));
+     if(!nego->credentials)

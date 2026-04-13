@@ -1,7 +1,7 @@
-From 5022c4e5a2bd1483c70f2e8177eb51edd36139eb Mon Sep 17 00:00:00 2001
+From 0d1cc065356bcb23642563c3046b0b0e860fa9bb Mon Sep 17 00:00:00 2001
 From: Johannes Schindelin <johannes.schindelin@gmx.de>
 Date: Wed, 31 Oct 2018 10:52:59 +0100
-Subject: [PATCH 2/2] Hack: make relocation work inside libexec/git-core/ and
+Subject: [PATCH 2/4] Hack: make relocation work inside libexec/git-core/ and
  bin/
 
 In Git for Windows, there is a copy of libcurl-4.dll in
@@ -30,10 +30,10 @@ Signed-off-by: Johannes Schindelin <johannes.schindelin@gmx.de>
  1 file changed, 20 insertions(+), 1 deletion(-)
 
 diff --git a/lib/vtls/vtls.c b/lib/vtls/vtls.c
-index bb45551b0..a864fb758 100644
+index b4a0547a8c..ce4f4af5e7 100644
 --- a/lib/vtls/vtls.c
 +++ b/lib/vtls/vtls.c
-@@ -343,10 +343,29 @@ CURLcode Curl_ssl_easy_config_complete(struct Curl_easy *data)
+@@ -341,10 +341,29 @@ CURLcode Curl_ssl_easy_config_complete(struct Curl_easy *data)
      get_dll_path(relocated_bundle, path_max);
      strip_n_suffix_folders(relocated_bundle, 1);
      strncat(relocated_bundle, "/", path_max - 1);

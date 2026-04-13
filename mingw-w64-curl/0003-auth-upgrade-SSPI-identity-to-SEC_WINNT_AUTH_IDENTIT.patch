@@ -1,0 +1,161 @@
+From 0aa2cd8539608511e34a58473f2974ae0ae50444 Mon Sep 17 00:00:00 2001
+From: Matthew John Cheetham <mjcheetham@outlook.com>
+Date: Tue, 24 Mar 2026 11:53:02 +0000
+Subject: [PATCH 3/4] auth: upgrade SSPI identity to SEC_WINNT_AUTH_IDENTITY_EX
+
+Replace SEC_WINNT_AUTH_IDENTITY with SEC_WINNT_AUTH_IDENTITY_EX across all
+SSPI authentication code. The extended structure adds Version, Length, and
+PackageList fields while remaining backwards compatible with all SSPI
+functions. Available since Windows XP.
+
+Curl_create_sspi_identity now sets the Version and Length fields when
+initializing the structure.
+
+Signed-off-by: Matthew John Cheetham <mjcheetham@outlook.com>
+Signed-off-by: Johannes Schindelin <johannes.schindelin@gmx.de>
+---
+ lib/curl_sspi.c         |  6 ++++--
+ lib/curl_sspi.h         |  6 +++---
+ lib/ldap.c              |  2 +-
+ lib/vauth/digest_sspi.c | 10 +++++-----
+ lib/vauth/vauth.h       | 12 ++++++------
+ 5 files changed, 19 insertions(+), 17 deletions(-)
+
+diff --git a/lib/curl_sspi.c b/lib/curl_sspi.c
+index 1d4cf925d6..018bfff28e 100644
+--- a/lib/curl_sspi.c
++++ b/lib/curl_sspi.c
+@@ -93,7 +93,7 @@ void Curl_sspi_global_cleanup(void)
+  * Returns CURLE_OK on success.
+  */
+ CURLcode Curl_create_sspi_identity(const char *userp, const char *passwdp,
+-                                   SEC_WINNT_AUTH_IDENTITY *identity)
++                                   SEC_WINNT_AUTH_IDENTITY_EX *identity)
+ {
+   xcharp_u useranddomain;
+   xcharp_u user, dup_user;
+@@ -105,6 +105,8 @@ CURLcode Curl_create_sspi_identity(const char *userp, const char *passwdp,
+ 
+   /* Initialize the identity */
+   memset(identity, 0, sizeof(*identity));
++  identity->Version = SEC_WINNT_AUTH_IDENTITY_VERSION;
++  identity->Length = sizeof(*identity);
+ 
+   useranddomain.tchar_ptr = curlx_convert_UTF8_to_tchar(userp);
+   if(!useranddomain.tchar_ptr)
+@@ -195,7 +197,7 @@ CURLcode Curl_create_sspi_identity(const char *userp, const char *passwdp,
+  *
+  * identity [in/out] - The identity structure.
+  */
+-void Curl_sspi_free_identity(SEC_WINNT_AUTH_IDENTITY *identity)
++void Curl_sspi_free_identity(SEC_WINNT_AUTH_IDENTITY_EX *identity)
+ {
+   if(identity) {
+     Curl_safefree(identity->User);
+diff --git a/lib/curl_sspi.h b/lib/curl_sspi.h
+index 3779d51753..ea405f53a7 100644
+--- a/lib/curl_sspi.h
++++ b/lib/curl_sspi.h
+@@ -34,14 +34,14 @@ void Curl_sspi_global_cleanup(void);
+ 
+ /* This is used to populate the domain in an SSPI identity structure */
+ CURLcode Curl_override_sspi_http_realm(const char *chlg,
+-                                       SEC_WINNT_AUTH_IDENTITY *identity);
++                                       SEC_WINNT_AUTH_IDENTITY_EX *identity);
+ 
+ /* This is used to generate an SSPI identity structure */
+ CURLcode Curl_create_sspi_identity(const char *userp, const char *passwdp,
+-                                   SEC_WINNT_AUTH_IDENTITY *identity);
++                                   SEC_WINNT_AUTH_IDENTITY_EX *identity);
+ 
+ /* This is used to free an SSPI identity structure */
+-void Curl_sspi_free_identity(SEC_WINNT_AUTH_IDENTITY *identity);
++void Curl_sspi_free_identity(SEC_WINNT_AUTH_IDENTITY_EX *identity);
+ 
+ /* Forward-declaration of global variables defined in curl_sspi.c */
+ extern PSecurityFunctionTable Curl_pSecFn;
+diff --git a/lib/ldap.c b/lib/ldap.c
+index e223078b03..59369a556d 100644
+--- a/lib/ldap.c
++++ b/lib/ldap.c
+@@ -157,7 +157,7 @@ static ULONG ldap_win_bind_auth(LDAP *server, const char *user,
+                                 const char *passwd, unsigned long authflags)
+ {
+   ULONG method = 0;
+-  SEC_WINNT_AUTH_IDENTITY cred;
++  SEC_WINNT_AUTH_IDENTITY_EX cred;
+   ULONG rc = LDAP_AUTH_METHOD_NOT_SUPPORTED;
+ 
+   memset(&cred, 0, sizeof(cred));
+diff --git a/lib/vauth/digest_sspi.c b/lib/vauth/digest_sspi.c
+index f29e569cd1..5f4b5e2735 100644
+--- a/lib/vauth/digest_sspi.c
++++ b/lib/vauth/digest_sspi.c
+@@ -95,8 +95,8 @@ CURLcode Curl_auth_create_digest_md5_message(struct Curl_easy *data,
+   CredHandle credentials;
+   CtxtHandle context;
+   PSecPkgInfo SecurityPackage;
+-  SEC_WINNT_AUTH_IDENTITY identity;
+-  SEC_WINNT_AUTH_IDENTITY *p_identity;
++  SEC_WINNT_AUTH_IDENTITY_EX identity;
++  SEC_WINNT_AUTH_IDENTITY_EX *p_identity;
+   SecBuffer chlg_buf;
+   SecBuffer resp_buf;
+   SecBufferDesc chlg_desc;
+@@ -240,7 +240,7 @@ CURLcode Curl_auth_create_digest_md5_message(struct Curl_easy *data,
+  * Returns CURLE_OK on success.
+  */
+ CURLcode Curl_override_sspi_http_realm(const char *chlg,
+-                                       SEC_WINNT_AUTH_IDENTITY *identity)
++                                       SEC_WINNT_AUTH_IDENTITY_EX *identity)
+ {
+   xcharp_u domain, dup_domain;
+ 
+@@ -466,8 +466,8 @@ CURLcode Curl_auth_create_digest_http_message(struct Curl_easy *data,
+ 
+   if(!digest->http_context) {
+     CredHandle credentials;
+-    SEC_WINNT_AUTH_IDENTITY identity;
+-    SEC_WINNT_AUTH_IDENTITY *p_identity;
++    SEC_WINNT_AUTH_IDENTITY_EX identity;
++    SEC_WINNT_AUTH_IDENTITY_EX *p_identity;
+     SecBuffer resp_buf;
+     SecBufferDesc resp_desc;
+     unsigned long attrs;
+diff --git a/lib/vauth/vauth.h b/lib/vauth/vauth.h
+index 3e66c89cb5..10a02321e3 100644
+--- a/lib/vauth/vauth.h
++++ b/lib/vauth/vauth.h
+@@ -170,8 +170,8 @@ struct ntlmdata {
+ #endif
+   CredHandle *credentials;
+   CtxtHandle *context;
+-  SEC_WINNT_AUTH_IDENTITY identity;
+-  SEC_WINNT_AUTH_IDENTITY *p_identity;
++  SEC_WINNT_AUTH_IDENTITY_EX identity;
++  SEC_WINNT_AUTH_IDENTITY_EX *p_identity;
+   size_t token_max;
+   BYTE *output_token;
+   BYTE *input_token;
+@@ -241,8 +241,8 @@ struct kerberos5data {
+   CredHandle *credentials;
+   CtxtHandle *context;
+   TCHAR *spn;
+-  SEC_WINNT_AUTH_IDENTITY identity;
+-  SEC_WINNT_AUTH_IDENTITY *p_identity;
++  SEC_WINNT_AUTH_IDENTITY_EX identity;
++  SEC_WINNT_AUTH_IDENTITY_EX *p_identity;
+   size_t token_max;
+   BYTE *output_token;
+ #else
+@@ -309,8 +309,8 @@ struct negotiatedata {
+   SECURITY_STATUS status;
+   CredHandle *credentials;
+   CtxtHandle *context;
+-  SEC_WINNT_AUTH_IDENTITY identity;
+-  SEC_WINNT_AUTH_IDENTITY *p_identity;
++  SEC_WINNT_AUTH_IDENTITY_EX identity;
++  SEC_WINNT_AUTH_IDENTITY_EX *p_identity;
+   TCHAR *spn;
+   size_t token_max;
+   BYTE *output_token;
