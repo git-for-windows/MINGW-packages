@@ -1,7 +1,7 @@
 From 0d1cc065356bcb23642563c3046b0b0e860fa9bb Mon Sep 17 00:00:00 2001
 From: Johannes Schindelin <johannes.schindelin@gmx.de>
 Date: Wed, 31 Oct 2018 10:52:59 +0100
-Subject: [PATCH 2/2] Hack: make relocation work inside libexec/git-core/ and
+Subject: [PATCH 2/4] Hack: make relocation work inside libexec/git-core/ and
  bin/
 
 In Git for Windows, there is a copy of libcurl-4.dll in

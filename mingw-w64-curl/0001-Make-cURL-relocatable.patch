@@ -1,7 +1,7 @@
 From b0761795838b6645cf1bc7d0c290decc1f57b4ca Mon Sep 17 00:00:00 2001
 From: Ray Donnelly <mingw.android@gmail.com>
 Date: Wed, 22 Feb 2017 11:03:04 +0100
-Subject: [PATCH 1/2] Make cURL relocatable
+Subject: [PATCH 1/4] Make cURL relocatable
 
 This adds the ability to specify CA_BUNDLE paths that are relative to
 the MSYS2 pseudo-root directory.
