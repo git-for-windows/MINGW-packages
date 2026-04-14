@@ -157,7 +157,7 @@ build() {
 check() {
   cd "${srcdir}/build-${MSYSTEM}"
 
-  make VERBOSE_FAILURE=1 TESTS=-test_symbol_presence test
+  HARNESS_JOBS=${HARNESS_JOBS:-8} make VERBOSE_FAILURE=1 TESTS=-test_symbol_presence test
 }
 
 _package() {
