@@ -1,26 +1,30 @@
-From 2c09395d987f18c333b15b3a33f4f412a3aac7ff Mon Sep 17 00:00:00 2001
+From de78b43696852c8e403d40527e3478209545463f Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Matthias=20A=C3=9Fhauer?= <mha1993@live.de>
 Date: Wed, 17 Sep 2025 10:53:00 +0200
-Subject: [PATCH 6/7] Mangle Absolute path
+Subject: [PATCH 6/9] Mangle Absolute path
 
 Test 25-test_verify.t tries to test some file:// URLs containing an absolute path,
 but perls abs_path() creates MSYS2 absolute paths in our case, which our native
 openssl doesn't understand.
 
 Run the path through cygpath to convert it into the expected format.
+
+Since Git for Windows recently stopped building its own Perl and now uses
+the MSYS2-provided one, $^O reports 'cygwin' rather than 'msys'. Account
+for both values so the cygpath conversion fires in either case.
 ---
  test/recipes/25-test_verify.t | 4 ++++
  1 file changed, 4 insertions(+)
 
 diff --git a/test/recipes/25-test_verify.t b/test/recipes/25-test_verify.t
-index 673c3d5..786a302 100644
+index ab8cdff..b7a6029 100644
 --- a/test/recipes/25-test_verify.t
 +++ b/test/recipes/25-test_verify.t
-@@ -614,6 +614,10 @@ my $foo_file = "cert.pem";
+@@ -626,6 +626,10 @@ my $foo_file = "cert.pem";
  copy($rootcert, $foo_file);
  ok(vfy_root("-CAstore", $foo_file), "CAstore foo:file");
  my $abs_cert = abs_path($rootcert);
-+if ($^O eq "msys") {
++if ($^O eq "msys" || $^O eq "cygwin") {
 +    $abs_cert = `cygpath -m $abs_cert`;
 +    chomp $abs_cert;
 +}

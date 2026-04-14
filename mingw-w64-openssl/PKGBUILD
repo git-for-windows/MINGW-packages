@@ -27,18 +27,20 @@ source=("https://github.com/openssl/openssl/releases/download/openssl-${pkgver}/
         '0006-Mangle-Absolute-path.patch'
         '0007-Fix-OS-detection.patch'
         '0008-Define-SIO_UDP_NETRESET-if-necessary.patch'
+        '0009-Also-treat-Cygwin-Perl-like-MSYS-Perl-in-test-skip-g.patch'
         'pathtools.c'
         'pathtools.h')
 sha256sums=('deae7c80cba99c4b4f940ecadb3c3338b13cb77418409238e57d7f31f2a3b736'
             'SKIP'
-            'baaaab0e91caf5690d4a264146cff2030bb5852ad14712d7f89e7e072533ae11'
-            'a45ab8e18db920e8c559d80598664cfb52d2f4e09653f4caaa0f4de0055982cf'
-            'c41bc19de1448b08b61ee47b55620e7629e9189a9a7f4e2fac42e8a9e5823d30'
-            '0862c9751775f1c75d0495538951343ff83c83a5344e61e091dd3e964a630640'
-            '52a4c65eb0af1a8319e2ece6e714ae6130f27bd46ba8d40966428694d64728ed'
-            'eca965cb6761cfa294857fd85eef4aa27fdc7e322ebcd88a1b67c4c668be7121'
-            'a00fe4dbc0c5848ccb1b205e3aae2dccd5246745e517e74349dfdb3b25968047'
-            'f2d2fec8009fc0acd291329b7de97b8b4082587e22cc4d95cd6cb0a858b46aa1'
+            '8503b2d481e8392a67152d529cfbb01cc9b9c4a8d7a529b202f3a1a385058c34'
+            'e64661d67c47c1f8b5a409a230fd5a7a97c5b9070ceeefdc469788cf85068c36'
+            '49f3855724820b3a543fe48ddd3fe3a3ad4a6e425e43934d46cce745a2b087d9'
+            'd226be89fdd2d9b576d6e6167858973ca2c6f4c9f606e7685e4451483a7ee5e0'
+            '7b536140d138d2af264ac23f3f9d2fae4c8226854c8b6a02b724b34c523ac5cb'
+            '2785fc1ee7c908c8a9b0b5e18371ce1baf75f5684877bf388004b74009e6ecb6'
+            '9a5c55ae51a8411034339ff9fc028cfb11337511957554b1681c1163160d82c8'
+            '32a166a50fe916fb872be441bf7db1f56d67222b7b38ccfe5da394802f79eeac'
+            '4f7c427058e5edc533c5c653ef5189e2b38998f4fb2e300f5db2675ed4bef5fb'
             '08209cbf1633fa92eae7e5d28f95f8df9d6184cc20fa878c99aec4709bb257fd'
             '965d3921ec4fdeec94a2718bc2c85ce5e1a00ea0e499330a554074a7ae15dfc6')
 
@@ -72,7 +74,8 @@ prepare() {
      0005-Fix-Text-comparison.patch \
      0006-Mangle-Absolute-path.patch \
      0007-Fix-OS-detection.patch \
-     0008-Define-SIO_UDP_NETRESET-if-necessary.patch
+     0008-Define-SIO_UDP_NETRESET-if-necessary.patch \
+     0009-Also-treat-Cygwin-Perl-like-MSYS-Perl-in-test-skip-g.patch
 
   if [[ "$MSYSTEM" == MINGW32 ]]
   then

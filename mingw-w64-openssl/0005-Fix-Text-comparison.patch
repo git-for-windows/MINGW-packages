@@ -1,7 +1,7 @@
-From f208d3920935f0efeac542391305e5baffe47687 Mon Sep 17 00:00:00 2001
+From 2313d1d189ac8d0107778b69fd7d93093bc8546c Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Matthias=20A=C3=9Fhauer?= <mha1993@live.de>
 Date: Tue, 16 Sep 2025 15:23:00 +0200
-Subject: [PATCH 5/7] Fix Text comparison
+Subject: [PATCH 5/9] Fix Text comparison
 
 0615d3a (Use text compare for PEM and text files, 2025-03-19) introduced perls
 compare_text into the tests, but didn't account for a scenario like our
@@ -9,6 +9,10 @@ MINGW-Packages where openssl uses CRLF as an EOL, but the perl running the tests
 expects just LF.
 
 Teach the affected tests to compare while accounting for differences in EOLs.
+
+Since Git for Windows recently stopped building its own Perl and now uses
+the MSYS2-provided one, $^O reports 'cygwin' rather than 'msys'. Account
+for both values so the CRLF normalization fires in either case.
 ---
  test/recipes/15-test_dsaparam.t      |  3 +--
  test/recipes/15-test_ml_kem_codecs.t |  2 +-
@@ -48,7 +52,7 @@ index bebb8b8..71292f1 100644
  use OpenSSL::Glob;
  use OpenSSL::Test qw/:DEFAULT data_file srctop_file bldtop_dir/;
 diff --git a/test/recipes/15-test_pkey.t b/test/recipes/15-test_pkey.t
-index 70bb083..e01ccd6 100644
+index 1f23795..6dd7b09 100644
 --- a/test/recipes/15-test_pkey.t
 +++ b/test/recipes/15-test_pkey.t
 @@ -11,8 +11,8 @@ use warnings;
@@ -87,7 +91,7 @@ index 50cb01a..6d40cfd 100644
  
  setup("test_pkcs8");
 diff --git a/util/perl/OpenSSL/Test/Utils.pm b/util/perl/OpenSSL/Test/Utils.pm
-index 34eafc4..daeb155 100644
+index 34eafc4..7a70d53 100644
 --- a/util/perl/OpenSSL/Test/Utils.pm
 +++ b/util/perl/OpenSSL/Test/Utils.pm
 @@ -11,11 +11,12 @@ use strict;
@@ -108,7 +112,7 @@ index 34eafc4..daeb155 100644
      return $have_IPv6;
  }
  
-+if ($^O eq 'msys') {
++if ($^O eq 'msys' || $^O eq 'cygwin') {
 +    no warnings 'redefine';
 +    sub compare_text {
 +        return File::Compare::compare_text($_[0], $_[1], sub {$_[0]=~ s/\r\n/\n/;$_[1]=~ s/\r\n/\n/; $_[0] ne $_[1]});

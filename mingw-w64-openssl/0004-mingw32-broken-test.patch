@@ -1,14 +1,14 @@
-From c4e21984736e7837d0aa160f2007cc92c1d3710e Mon Sep 17 00:00:00 2001
+From d21e01aa7fa2981c3897fe8e170d03c66b3a2c1d Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Matthias=20A=C3=9Fhauer?= <mha1993@live.de>
 Date: Fri, 24 Nov 2023 06:47:04 +0000
-Subject: [PATCH 4/7] mingw32-broken-test
+Subject: [PATCH 4/9] mingw32-broken-test
 
 ---
  test/asn1_time_test.c | 7 -------
  1 file changed, 7 deletions(-)
 
 diff --git a/test/asn1_time_test.c b/test/asn1_time_test.c
-index 32bc4ff..4d1fdbe 100644
+index 6e18cd0..450f470 100644
 --- a/test/asn1_time_test.c
 +++ b/test/asn1_time_test.c
 @@ -68,13 +68,6 @@ static const struct TESTDATA_asn1_to_utc asn1_to_utc[] = {

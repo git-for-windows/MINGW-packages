@@ -1,7 +1,7 @@
-From c3c28ed00601a2fbab8efbdc787cb0e1696b1fea Mon Sep 17 00:00:00 2001
+From f482755719e780a0655d1c0b8c1fcf1183a188b0 Mon Sep 17 00:00:00 2001
 From: Johannes Schindelin <johannes.schindelin@gmx.de>
 Date: Tue, 27 Jan 2026 17:48:43 +0100
-Subject: [PATCH] Define `SIO_UDP_NETRESET` if necessary
+Subject: [PATCH 8/9] Define `SIO_UDP_NETRESET` if necessary
 
 Older `mingw-w64-headers` versions seem not to define this constant, but
 OpenSSL started using it in v3.5.5.
@@ -12,7 +12,7 @@ Signed-off-by: Johannes Schindelin <johannes.schindelin@gmx.de>
  1 file changed, 3 insertions(+)
 
 diff --git a/ssl/quic/quic_reactor.c b/ssl/quic/quic_reactor.c
-index 1a95f13..fd913c7 100644
+index c30bc3c..0c8c5ac 100644
 --- a/ssl/quic/quic_reactor.c
 +++ b/ssl/quic/quic_reactor.c
 @@ -15,6 +15,9 @@
@@ -25,6 +25,3 @@ index 1a95f13..fd913c7 100644
  #endif
  
  /*
--- 
-2.52.0.windows.1
-

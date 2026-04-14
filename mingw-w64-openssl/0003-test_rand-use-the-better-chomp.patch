@@ -1,7 +1,7 @@
-From fbb81a899dabd443737e726fde930906fce5f846 Mon Sep 17 00:00:00 2001
+From 0eda9fae1ece0f89b08cbcfcf55fe0099711cf49 Mon Sep 17 00:00:00 2001
 From: Johannes Schindelin <johannes.schindelin@gmx.de>
 Date: Wed, 25 Oct 2023 17:10:17 +0200
-Subject: [PATCH 3/7] test_rand: use the "better chomp"
+Subject: [PATCH 3/9] test_rand: use the "better chomp"
 
 Following in the footsteps of
 https://github.com/openssl/openssl/commit/9ba96fbb2523cb12747c559c704c58bd8f9e7982
