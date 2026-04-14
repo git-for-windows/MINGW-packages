@@ -172,7 +172,7 @@ _package() {
     return
   }
 
-  make install DESTDIR="${pkgdir}"
+  make -j1 install DESTDIR="${pkgdir}"
 
   install -Dm644 "${srcdir}/${_realname}-${pkgver}/LICENSE.txt" "${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/LICENSE"
 }
