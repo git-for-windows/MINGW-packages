@@ -1,0 +1,160 @@
+From f7f115d7a811be46afad90d9b987dd2ae7680ae7 Mon Sep 17 00:00:00 2001
+From: Johannes Schindelin <johannes.schindelin@gmx.de>
+Date: Tue, 14 Apr 2026 12:47:25 +0200
+Subject: [PATCH 9/9] Also treat Cygwin Perl like MSYS Perl in test skip guards
+
+Git for Windows recently stopped shipping its own Perl build and switched
+to the MSYS2-provided one. That Perl reports $^O as 'cygwin' rather than
+'msys', so the upstream skip guards that protect tests from running on
+non-native Perl (where they would hang on Windows Firewall prompts or
+fail due to path conventions) no longer fire.
+
+Add 'cygwin' alongside 'msys' in every upstream skip guard that exists to
+prevent test hangs and spurious failures when OpenSSL is built as a MINGW
+package but tested with MSYS2's Cygwin-derived Perl.
+---
+ test/recipes/02-test_errstr.t          |  2 +-
+ test/recipes/25-test_eai_data.t        |  2 +-
+ test/recipes/25-test_x509.t            |  2 +-
+ test/recipes/80-test_cmp_http.t        |  2 +-
+ test/recipes/82-test_ocsp_cert_chain.t |  2 +-
+ test/recipes/82-test_tfo_cli.t         |  2 +-
+ test/recipes/90-test_store.t           | 12 ++++++------
+ 7 files changed, 12 insertions(+), 12 deletions(-)
+
+diff --git a/test/recipes/02-test_errstr.t b/test/recipes/02-test_errstr.t
+index 07a68ad..01713c1 100644
+--- a/test/recipes/02-test_errstr.t
++++ b/test/recipes/02-test_errstr.t
+@@ -29,7 +29,7 @@ plan skip_all => 'This is unsupported for cross compiled configurations'
+ # on Windows when built with msys perl.  Similar problems are also observed
+ # in MSVC builds, depending on the perl implementation used.
+ plan skip_all => 'This is unsupported on MSYS/MinGW or MSWin32'
+-    if $^O eq 'msys' or $^O eq 'MSWin32';
++    if $^O eq 'msys' or $^O eq 'cygwin' or $^O eq 'MSWin32';
+ 
+ plan skip_all => 'OpenSSL is configured "no-autoerrinit" or "no-err"'
+     if disabled('autoerrinit') || disabled('err');
+diff --git a/test/recipes/25-test_eai_data.t b/test/recipes/25-test_eai_data.t
+index 63548d0..c36edab 100644
+--- a/test/recipes/25-test_eai_data.t
++++ b/test/recipes/25-test_eai_data.t
+@@ -50,7 +50,7 @@ ok(run(app(["openssl", "x509", "-ext", "subjectAltName", "-in", $utf8_pem, "-noo
+ is(cmp_text($out, srctop_file($folder, "san.utf8")), 0, 'Comparing othername for IDN domain');
+ 
+ SKIP: {
+-    skip "Unicode tests disabled on MingW", 2 if $^O =~ /^msys$/;
++    skip "Unicode tests disabled on MingW", 2 if $^O =~ /^(msys|cygwin)$/;
+ 
+     ok(run(app(["openssl", "verify", "-nameopt", "utf8", "-no_check_time", "-verify_email", "学生\@elementary.school.example.com", "-CAfile", $ascii_chain_pem, $ascii_pem])));
+     ok(run(app(["openssl", "verify", "-nameopt", "utf8", "-no_check_time", "-verify_email", "医生\@大学.example.com", "-CAfile", $utf8_chain_pem, $utf8_pem])));
+diff --git a/test/recipes/25-test_x509.t b/test/recipes/25-test_x509.t
+index e4e373f..13e90c0 100644
+--- a/test/recipes/25-test_x509.t
++++ b/test/recipes/25-test_x509.t
+@@ -56,7 +56,7 @@ SKIP: {
+ 
+ SKIP: {
+     skip "DES disabled", 1 if disabled("des");
+-    skip "Platform doesn't support command line UTF-8", 1 if $^O =~ /^(VMS|msys)$/;
++    skip "Platform doesn't support command line UTF-8", 1 if $^O =~ /^(VMS|msys|cygwin)$/;
+ 
+     my $p12 = srctop_file("test", "shibboleth.pfx");
+     my $p12pass = "σύνθημα γνώρισμα";
+diff --git a/test/recipes/80-test_cmp_http.t b/test/recipes/80-test_cmp_http.t
+index 63b2525..6fbc683 100644
+--- a/test/recipes/80-test_cmp_http.t
++++ b/test/recipes/80-test_cmp_http.t
+@@ -36,7 +36,7 @@ plan skip_all => "These tests are not supported in a no-cms build"
+     if disabled("cms"); # central key pair generation
+ 
+ plan skip_all => "Tests involving local HTTP server not available on Windows or VMS"
+-    if $^O =~ /^(VMS|MSWin32|msys)$/;
++    if $^O =~ /^(VMS|MSWin32|msys|cygwin)$/;
+ plan skip_all => "Tests involving local HTTP server not available in cross-compile builds"
+     if defined $ENV{EXE_SHELL};
+ 
+diff --git a/test/recipes/82-test_ocsp_cert_chain.t b/test/recipes/82-test_ocsp_cert_chain.t
+index a0c3737..281bf66 100644
+--- a/test/recipes/82-test_ocsp_cert_chain.t
++++ b/test/recipes/82-test_ocsp_cert_chain.t
+@@ -26,7 +26,7 @@ plan skip_all => "$test_name requires sock enabled"
+ plan skip_all => "$test_name requires TLS enabled"
+     if alldisabled(available_protocols("tls"));
+ plan skip_all => "$test_name is not available Windows or VMS"
+-    if $^O =~ /^(VMS|MSWin32|msys)$/;
++    if $^O =~ /^(VMS|MSWin32|msys|cygwin)$/;
+ 
+ plan tests => 3;
+ 
+diff --git a/test/recipes/82-test_tfo_cli.t b/test/recipes/82-test_tfo_cli.t
+index f069912..758fd82 100644
+--- a/test/recipes/82-test_tfo_cli.t
++++ b/test/recipes/82-test_tfo_cli.t
+@@ -20,7 +20,7 @@ plan skip_all => "test_tfo_cli needs sock enabled" if disabled("sock");
+ plan skip_all => "test_tfo_cli needs tls < 1.3 enabled"
+     if disabled("tls1") && disabled("tls1_1") && disabled("tls1_2");
+ plan skip_all => "test_tfo_cli does not run on Windows nor VMS"
+-    if $^O =~ /^(VMS|MSWin32|msys)$/;
++    if $^O =~ /^(VMS|MSWin32|msys|cygwin)$/;
+ 
+ plan tests => 8;
+ 
+diff --git a/test/recipes/90-test_store.t b/test/recipes/90-test_store.t
+index f0f9e4d..e5224e7 100644
+--- a/test/recipes/90-test_store.t
++++ b/test/recipes/90-test_store.t
+@@ -121,7 +121,7 @@ my $n = 4 + scalar @methods
+ # Test doesn't work under msys because the file name munging doesn't work
+ # correctly with the "ot:" prefix
+ my $do_test_ossltest_store =
+-    !(disabled("engine") || disabled("dynamic-engine") || $^O =~ /^msys$/);
++    !(disabled("engine") || disabled("dynamic-engine") || $^O =~ /^(msys|cygwin)$/);
+ 
+ if ($do_test_ossltest_store) {
+     # test loading with apps 'org.openssl.engine:' loader, using the
+@@ -201,7 +201,7 @@ indir "store_$$" => sub {
+                 ok(run(app([@storeutl, "-noout", to_abs_file($file)])));
+               SKIP:
+                 {
+-                    skip "file: tests disabled on MingW", 4  if $^O =~ /^msys$/;
++                    skip "file: tests disabled on MingW", 4  if $^O =~ /^(msys|cygwin)$/;
+ 
+                     ok(run(app([@storeutl, "-noout",
+                                 to_abs_file_uri($file)])));
+@@ -229,7 +229,7 @@ indir "store_$$" => sub {
+ 
+               SKIP:
+                 {
+-                    skip "file: tests disabled on MingW", 2  if $^O =~ /^msys$/;
++                    skip "file: tests disabled on MingW", 2  if $^O =~ /^(msys|cygwin)$/;
+ 
+                     ok(run(app([@storeutl, "-noout", "-passin",
+                                 "pass:password", to_abs_file_uri($_)])));
+@@ -240,7 +240,7 @@ indir "store_$$" => sub {
+             foreach (values %generated_file_files) {
+               SKIP:
+                 {
+-                    skip "file: tests disabled on MingW", 1  if $^O =~ /^msys$/;
++                    skip "file: tests disabled on MingW", 1  if $^O =~ /^(msys|cygwin)$/;
+ 
+                     ok(run(app([@storeutl,  "-noout", $_])));
+                 }
+@@ -248,7 +248,7 @@ indir "store_$$" => sub {
+             foreach (@noexist_file_files) {
+               SKIP:
+                 {
+-                    skip "file: tests disabled on MingW", 1  if $^O =~ /^msys$/;
++                    skip "file: tests disabled on MingW", 1  if $^O =~ /^(msys|cygwin)$/;
+ 
+                     ok(!run(app([@storeutl,  "-noout", $_])));
+                 }
+@@ -260,7 +260,7 @@ indir "store_$$" => sub {
+                 ok(run(app([@storeutl,  "-noout", to_abs_file($dir, 1)])));
+               SKIP:
+                 {
+-                    skip "file: tests disabled on MingW", 1  if $^O =~ /^msys$/;
++                    skip "file: tests disabled on MingW", 1  if $^O =~ /^(msys|cygwin)$/;
+ 
+                     ok(run(app([@storeutl,  "-noout",
+                                 to_abs_file_uri($dir, 1)])));

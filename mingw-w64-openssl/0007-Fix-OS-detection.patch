@@ -1,12 +1,16 @@
-From f4413c73dc50a0b249bc7ca629dbf5906e7a23c1 Mon Sep 17 00:00:00 2001
+From 68e41868b1711ae6a4fee3e77e1f0bb37d9e1546 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Matthias=20A=C3=9Fhauer?= <mha1993@live.de>
 Date: Tue, 16 Sep 2025 17:29:00 +0200
-Subject: [PATCH 7/7] Fix OS detection
+Subject: [PATCH 7/9] Fix OS detection
 
 OpenSSL tests assume the perl that runs the tests to be native to the platform
 of the openssl being tested. This isn't the case for our MINGW-Packages.
 
 Teach the affected tests to treat msys perl the same as they would MSWin32 perl.
+
+Since Git for Windows recently stopped building its own Perl and now uses
+the MSYS2-provided one, $^O reports 'cygwin' rather than 'msys'. Account
+for both values in the OS detection guards.
 ---
  test/recipes/20-test_speed.t      | 4 ++--
  test/recipes/25-test_verify.t     | 4 ++--
@@ -14,7 +18,7 @@ Teach the affected tests to treat msys perl the same as they would MSWin32 perl.
  3 files changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/test/recipes/20-test_speed.t b/test/recipes/20-test_speed.t
-index 3c3c5fa..1c37d5d 100644
+index c6a9824..cff981b 100644
 --- a/test/recipes/20-test_speed.t
 +++ b/test/recipes/20-test_speed.t
 @@ -29,7 +29,7 @@ ok(run(app(['openssl', 'speed', '-testmode'])),
@@ -22,7 +26,7 @@ index 3c3c5fa..1c37d5d 100644
  SKIP: {
      skip "Multi option is not supported by this OpenSSL build", 1
 -       if $^O =~ /^(VMS|MSWin32)$/;
-+       if $^O =~ /^(VMS|MSWin32|msys)$/;
++       if $^O =~ /^(VMS|MSWin32|msys|cygwin)$/;
  
      ok(run(app(['openssl', 'speed', '-testmode', '-multi', 2])),
             "Test the multi option");
@@ -31,34 +35,34 @@ index 3c3c5fa..1c37d5d 100644
  SKIP: {
      skip "Mlock option is not supported by this OpenSSL build", 1
 -       if $^O !~ /^(linux|MSWin32)$/;
-+       if $^O =~ /^(linux|MSWin32|msys)$/;
++       if $^O =~ /^(linux|MSWin32|msys|cygwin)$/;
  
         ok(run(app(['openssl', 'speed', '-testmode', '-mlock'])),
                "Test the mlock option");
 diff --git a/test/recipes/25-test_verify.t b/test/recipes/25-test_verify.t
-index 786a302..0f9b7b5 100644
+index b7a6029..4e1bb67 100644
 --- a/test/recipes/25-test_verify.t
 +++ b/test/recipes/25-test_verify.t
-@@ -605,7 +605,7 @@ ok(!vfy_root("-CAstore", "non-existing", "-CAfile", $rootcert), "CAfile and non-
+@@ -617,7 +617,7 @@ ok(!vfy_root("-CAstore", "non-existing", "-CAfile", $rootcert), "CAfile and non-
  
  SKIP: {
      skip "file names with colons aren't supported on Windows and VMS", 1
 -        if $^O =~ /^(MSWin32|VMS)$/;
-+        if $^O =~ /^(MsWin32|VMS|msys)$/;
++        if $^O =~ /^(MsWin32|VMS|msys|cygwin)$/;
      my $foo_file = "foo:cert.pem";
      copy($rootcert, $foo_file);
      ok(vfy_root("-CAstore", $foo_file), "CAstore foo:file");
-@@ -622,7 +622,7 @@ if ($^O eq "msys") {
+@@ -634,7 +634,7 @@ if ($^O eq "msys" || $^O eq "cygwin") {
  # file://authority/C:/what/ever/foo.pem and file:///C:/what/ever/foo.pem
  # file://C:/what/ever/foo.pem is non-standard and may not be accepted.
  # See RFC 8089 for details.
 -$abs_cert = "/" . $abs_cert if ($^O eq "MSWin32");
-+$abs_cert = "/" . $abs_cert if ($^O eq "MSWin32" or $^O eq "msys");
++$abs_cert = "/" . $abs_cert if ($^O eq "MSWin32" or $^O eq "msys" or $^O eq "cygwin");
  ok(vfy_root("-CAstore", "file://".$abs_cert), "CAstore file:///path");
  ok(vfy_root("-CAstore", "file://localhost".$abs_cert), "CAstore file://localhost/path");
  ok(!vfy_root("-CAstore", "file://otherhost".$abs_cert), "CAstore file://otherhost/path");
 diff --git a/test/recipes/70-test_sslrecords.t b/test/recipes/70-test_sslrecords.t
-index 299ecb6..8efbca4 100644
+index 299ecb6..13192e3 100644
 --- a/test/recipes/70-test_sslrecords.t
 +++ b/test/recipes/70-test_sslrecords.t
 @@ -43,7 +43,7 @@ SKIP: {
@@ -66,7 +70,7 @@ index 299ecb6..8efbca4 100644
  SKIP: {
      skip "DTLS 1.2 is disabled", 22 if disabled("dtls1_2");
 -    skip "DTLSProxy does not work on Windows", 22 if $^O =~ /^(MSWin32)$/;
-+    skip "DTLSProxy does not work on Windows", 22 if $^O =~ /^(MSWin32|msys)$/;
++    skip "DTLSProxy does not work on Windows", 22 if $^O =~ /^(MSWin32|msys|cygwin)$/;
      run_tests(1);
  }
  
