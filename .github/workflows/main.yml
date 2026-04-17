@@ -67,7 +67,7 @@ jobs:
           mkdir -p "$top_dir/$artifacts" &&
           mv *.tar.* "$top_dir/$artifacts"/ &&
           echo "artifacts=$artifacts" >>$GITHUB_ENV
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: ${{ env.artifacts }}
           path: ${{ env.artifacts }}
