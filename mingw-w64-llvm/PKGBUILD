@@ -260,7 +260,7 @@ build() {
   fi
 
   MSYS2_ARG_CONV_EXCL="-DCMAKE_INSTALL_PREFIX=" \
-  ${MINGW_PREFIX}/bin/cmake.exe \
+  strace ${MINGW_PREFIX}/bin/cmake.exe \
     -GNinja \
     -DLLVM_ENABLE_PROJECTS="${_projects}" \
     -DLLVM_ENABLE_RTTI=ON \
