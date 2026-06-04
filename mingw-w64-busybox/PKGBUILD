@@ -2,15 +2,14 @@
 
 _realname=busybox
 pkgbase=mingw-w64-${_realname}
-pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}"
-         "${MINGW_PACKAGE_PREFIX}-${_realname}-pdb")
+pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}")
 _ver_base=1.38.0
 pkgver=1.38.0.21208.66408c3b6
 pkgrel=1
 pkgdesc="Windows port of BusyBox (mingw-w64)"
 arch=('any')
 url="https://github.com/git-for-windows/busybox-w32"
-makedepends=("${MINGW_PACKAGE_PREFIX}-cv2pdb")
+
 license=('GPL2')
 
 options=('!strip')
@@ -54,18 +53,11 @@ build() {
   CPPFLAGS="$F${CPPFLAGS##* -D__USE_MINGW_ANSI_STDIO=*}"
 
   make clean
-  make busybox_unstripped.exe
-  cv2pdb busybox_unstripped.exe busybox.exe busybox.pdb
+  make
 }
 
 package() {
   cd ${srcdir}/${_realname}-w32
-
-  test pdb != "$1" || {
-    install -d -m 755 "${pkgdir}${MINGW_PREFIX}/bin"
-    install -m 755 busybox.pdb "${pkgdir}${MINGW_PREFIX}/bin"
-    return
-  }
 
   # install into $MINGW_PREFIX/bin/
   ! grep -q '\$prefix/bin' applets/install.sh ||
@@ -82,10 +74,6 @@ package() {
 
 package_busybox() {
   package
-}
-
-package_busybox-pdb() {
-  package pdb
 }
 
 # template start; name=mingw-w64-splitpkg-wrappers; version=1.0;
