@@ -1,0 +1,145 @@
+# Throwaway workflow to reproduce the mingw-w64-busybox build failure
+# on the mingw32 and clangarm64 axes inside CI, then hand the failing
+# runner over to GitHub Copilot CLI in --yolo mode to diagnose and
+# (ideally) verify a fix end-to-end. The diagnosis is uploaded as a
+# workflow artifact for the human to review.
+#
+# This workflow exists only on the `debug-busybox-ci` branch and is
+# expected to be deleted (along with the branch) once the underlying
+# bugs are fixed upstream.
+
+name: debug-busybox (throwaway)
+
+on:
+  push:
+    branches: [debug-busybox-ci]
+  workflow_dispatch:
+
+jobs:
+  reproduce-and-diagnose:
+    name: build busybox (${{ matrix.mingw_arch }})
+    runs-on: ${{ matrix.runs_on }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - mingw_arch: mingw32
+            sdk_architecture: i686
+            msystem: MINGW32
+            runs_on: windows-latest
+          - mingw_arch: clangarm64
+            sdk_architecture: aarch64
+            msystem: CLANGARM64
+            runs_on: windows-11-arm
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download Git for Windows SDK
+        id: setup-sdk
+        uses: git-for-windows/setup-git-for-windows-sdk@v2
+        with:
+          flavor: full
+          architecture: ${{ matrix.sdk_architecture }}
+
+      - name: update the SDK ("pacman -Syyu")
+        timeout-minutes: 20
+        shell: powershell
+        run: |
+          & ("${{ steps.setup-sdk.outputs.result }}\update-via-pacman.ps1")
+
+      - name: rebase `.dll` base addresses (i686 only)
+        if: matrix.sdk_architecture == 'i686'
+        shell: powershell
+        run: |
+          if (Test-Path D:\git-sdk-32-full -PathType Container) {
+            cd D:\git-sdk-32-full
+          } else {
+            cd C:\git-sdk-32-full
+          }
+          if (!$?) { exit(1); }
+
+          $env:MSYSTEM = "MINGW32"
+          $env:PATH = "$(Get-Location)\usr\bin;" + $env:PATH
+          $env:MSYS2_PATH_TYPE = "minimal"
+
+          sh.exe -lc "set -x && rm -f /usr/share/libalpm/hooks/rebase.hook"
+          sh.exe -lc "set -x && find /usr/lib/perl5/*_perl -name \*.dll >perl-dlls.txt"
+          type perl-dlls.txt
+          dash -x /usr/bin/rebaseall -p -T perl-dlls.txt
+          bash -lc "set -x && rebase -b 0x61500000 /usr/lib/perl5/core_perl/auto/*/{*,*/*}.dll"
+          bash -lc "set -x && rebase -v -b 0x63f00000 /usr/lib/perl5/core_perl/auto/Cwd/Cwd.dll"
+          bash -lc "set -x && rebase -v -i /usr/lib/perl5/core_perl/auto/Cwd/Cwd.dll"
+
+      - name: Build mingw-w64-busybox (expected to fail)
+        id: build
+        timeout-minutes: 30
+        shell: bash
+        env:
+          MINGW_ARCH: ${{ matrix.mingw_arch }}
+        run: |
+          set -o pipefail
+          cd mingw-w64-busybox &&
+          MAKEFLAGS=-j6 PKGEXT='.pkg.tar.xz' \
+            makepkg-mingw -s --noconfirm --skippgpcheck 2>&1 |
+            tee ../build.log
+
+      - name: Render Copilot CLI prompt for this axis
+        if: failure() && steps.build.conclusion == 'failure'
+        shell: bash
+        env:
+          MINGW_ARCH: ${{ matrix.mingw_arch }}
+        run: |
+          # Only expand $MINGW_ARCH; leave any other $-references alone so
+          # nothing else accidentally gets blanked.
+          envsubst '${MINGW_ARCH}' \
+            <.github/copilot-prompts/debug-busybox-build.md \
+            >copilot-prompt.md
+
+      - name: Set up Copilot CLI
+        if: failure() && steps.build.conclusion == 'failure'
+        shell: bash
+        env:
+          # Make sure npm.cmd from the runner image is reachable.
+          MSYS2_PATH_TYPE: inherit
+        run: |
+          npm.cmd install -g @github/copilot
+
+      - name: Run Copilot CLI to diagnose the failure
+        if: failure() && steps.build.conclusion == 'failure'
+        timeout-minutes: 30
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+          MINGW_ARCH: ${{ matrix.mingw_arch }}
+          MSYSTEM: ${{ matrix.msystem }}
+          MSYS2_PATH_TYPE: inherit
+          CHERE_INVOKING: 1
+        run: |
+          prompt="$(cat copilot-prompt.md)" &&
+          copilot.cmd -p "$prompt" --yolo </dev/null
+
+      - name: Archive Copilot session state
+        if: always()
+        shell: bash
+        run: |
+          if test -d "$HOME/.copilot"; then
+            tar czf copilot-session-${{ matrix.mingw_arch }}.tar.gz \
+              -C "$HOME" .copilot ||
+              echo "Could not archive ~/.copilot"
+          fi
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: debug-busybox-${{ matrix.mingw_arch }}
+          if-no-files-found: warn
+          path: |
+            build.log
+            copilot-prompt.md
+            copilot-diagnosis-*.md
+            copilot-session-*.tar.gz
+            mingw-w64-busybox/verify-build.log
+            mingw-w64-busybox/*.pkg.tar.xz
