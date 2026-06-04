@@ -117,8 +117,13 @@ jobs:
           MSYS2_PATH_TYPE: inherit
           CHERE_INVOKING: 1
         run: |
-          prompt="$(cat copilot-prompt.md)" &&
-          copilot.cmd -p "$prompt" --yolo </dev/null
+          # Reference the rendered prompt with `@path` instead of
+          # `-p "$(cat ...)"`: copilot.cmd funnels its argv through
+          # cmd.exe whose 8 KB-per-command limit this prompt blows
+          # past, producing "The command line is too long." before
+          # Copilot ever starts.
+          copilot.cmd -p "Follow the instructions in @copilot-prompt.md exactly." \
+            --yolo </dev/null
 
       - name: Archive Copilot session state
         if: always()
