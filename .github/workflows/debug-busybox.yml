@@ -7,6 +7,22 @@
 # This workflow exists only on the `debug-busybox-ci` branch and is
 # expected to be deleted (along with the branch) once the underlying
 # bugs are fixed upstream.
+#
+# Faithful-reproducer notes:
+#  - The git-for-windows-automation build-and-deploy.yml workflow that
+#    originally hit these failures dispatches with ARCHITECTURE='' (the
+#    default), which makes setup-git-for-windows-sdk install the
+#    x86_64-flavor SDK (git-sdk-64) and cross-builds mingw32 from it.
+#    The relevant `i686-w64-mingw32-gcc` is therefore the one shipped
+#    inside git-sdk-64, not the native one in git-sdk-32. The first
+#    iteration of this throwaway used `architecture: i686` which pulls
+#    git-sdk-32 instead, and the mingw32 build passed unexpectedly
+#    because a different toolchain build was exercised. We now match
+#    the original by using `architecture: x86_64` for the mingw32 axis.
+#  - clangarm64 still wants `architecture: aarch64` (= git-sdk-arm64)
+#    because that is the only SDK that ships clangarm64 tooling, and
+#    that is also what the original build-and-deploy.yml dispatch uses
+#    when ARCHITECTURE='aarch64'.
 
 name: debug-busybox (throwaway)
 
@@ -25,8 +41,8 @@ jobs:
       matrix:
         include:
           - mingw_arch: mingw32
-            sdk_architecture: i686
-            msystem: MINGW32
+            sdk_architecture: x86_64
+            msystem: MINGW64
             runs_on: windows-latest
           - mingw_arch: clangarm64
             sdk_architecture: aarch64
@@ -48,28 +64,36 @@ jobs:
         run: |
           & ("${{ steps.setup-sdk.outputs.result }}\update-via-pacman.ps1")
 
-      - name: rebase `.dll` base addresses (i686 only)
-        if: matrix.sdk_architecture == 'i686'
-        shell: powershell
+      - name: Record toolchain versions (pre-build baseline)
+        shell: bash
         run: |
-          if (Test-Path D:\git-sdk-32-full -PathType Container) {
-            cd D:\git-sdk-32-full
-          } else {
-            cd C:\git-sdk-32-full
-          }
-          if (!$?) { exit(1); }
-
-          $env:MSYSTEM = "MINGW32"
-          $env:PATH = "$(Get-Location)\usr\bin;" + $env:PATH
-          $env:MSYS2_PATH_TYPE = "minimal"
-
-          sh.exe -lc "set -x && rm -f /usr/share/libalpm/hooks/rebase.hook"
-          sh.exe -lc "set -x && find /usr/lib/perl5/*_perl -name \*.dll >perl-dlls.txt"
-          type perl-dlls.txt
-          dash -x /usr/bin/rebaseall -p -T perl-dlls.txt
-          bash -lc "set -x && rebase -b 0x61500000 /usr/lib/perl5/core_perl/auto/*/{*,*/*}.dll"
-          bash -lc "set -x && rebase -v -b 0x63f00000 /usr/lib/perl5/core_perl/auto/Cwd/Cwd.dll"
-          bash -lc "set -x && rebase -v -i /usr/lib/perl5/core_perl/auto/Cwd/Cwd.dll"
+          {
+            echo "=== uname / MSYSTEM ==="
+            uname -a
+            echo "MSYSTEM=${MSYSTEM:-<unset>}"
+            echo
+            echo "=== Relevant pacman packages ==="
+            pacman -Qi mingw-w64-i686-gcc mingw-w64-i686-gcc-libs \
+                     mingw-w64-i686-binutils mingw-w64-i686-headers-git \
+                     mingw-w64-i686-crt-git \
+                     mingw-w64-x86_64-gcc mingw-w64-x86_64-gcc-libs \
+                     mingw-w64-x86_64-binutils \
+                     mingw-w64-clang-aarch64-clang \
+                     mingw-w64-clang-aarch64-llvm \
+                     mingw-w64-clang-aarch64-crt-git \
+                     mingw-w64-clang-aarch64-headers-git \
+              2>/dev/null | grep -E '^(Name|Version|Build Date)' || true
+            echo
+            echo "=== compiler binaries on PATH ==="
+            for tool in \
+              i686-w64-mingw32-gcc x86_64-w64-mingw32-gcc \
+              aarch64-w64-mingw32-clang aarch64-w64-mingw32-gcc \
+              llvm-ar ar; do
+              p=$(command -v "$tool" 2>/dev/null || echo "<not found>")
+              echo "$tool: $p"
+              [ "$p" = "<not found>" ] || "$tool" --version 2>&1 | head -1 | sed "s/^/  /"
+            done
+          } 2>&1 | tee toolchain-versions.log
 
       - name: Build mingw-w64-busybox (expected to fail)
         id: build
@@ -125,6 +149,90 @@ jobs:
           copilot.cmd -p "Follow the instructions in @copilot-prompt.md exactly." \
             --yolo </dev/null
 
+      - name: Capture busybox-w32 source mutations
+        if: always()
+        shell: bash
+        run: |
+          # Even if Copilot didn't run, the build step may have left a
+          # partial build tree we want to preserve. If the source clone
+          # exists, snapshot every tracked, modified, and untracked file
+          # so that no work Copilot did is lost when the runner is
+          # reaped. The two-pronged approach (diff for tracked changes
+          # plus tar of untracked) captures everything regardless of
+          # whether Copilot's edits were `edit`-style or new-file
+          # `create`-style.
+          src=mingw-w64-busybox/src/busybox-w32
+          if [ ! -d "$src/.git" ]; then
+            echo "No busybox-w32 source clone present; skipping." \
+              | tee busybox-w32-status.log
+            exit 0
+          fi
+          {
+            echo "=== git status ==="
+            git -C "$src" status --porcelain=v1
+            echo
+            echo "=== HEAD ==="
+            git -C "$src" log -1 --format='%H %ai %s'
+            echo
+            echo "=== diff against HEAD (tracked file changes) ==="
+            git -C "$src" diff HEAD
+          } 2>&1 | tee busybox-w32-status.log
+
+          # Save the diff separately so it is applyable with git apply.
+          git -C "$src" diff HEAD >busybox-w32-tracked.patch || true
+
+          # Pack any untracked files that are not in .gitignore so new
+          # files Copilot created (e.g. a freshly added header) are
+          # preserved too.
+          mapfile -t untracked < <(
+            git -C "$src" ls-files --others --exclude-standard
+          )
+          if [ "${#untracked[@]}" -gt 0 ]; then
+            tar czf busybox-w32-untracked.tar.gz -C "$src" "${untracked[@]}"
+          fi
+
+      - name: Capture MINGW-packages tree mutations
+        if: always()
+        shell: bash
+        run: |
+          # Copilot may have added a .patch file alongside the PKGBUILD
+          # (the recommended "distro patch" strategy in the prompt) or
+          # tweaked the PKGBUILD itself. Capture both as a diff against
+          # the workflow's checkout HEAD, plus a tar of untracked files
+          # that are not in .gitignore.
+          {
+            echo "=== git status (MINGW-packages root) ==="
+            git status --porcelain=v1
+            echo
+            echo "=== diff against HEAD ==="
+            git diff HEAD -- ':!mingw-w64-busybox/src' \
+                             ':!mingw-w64-busybox/pkg' \
+                             ':!mingw-w64-busybox/*.pkg.tar.xz'
+          } 2>&1 | tee mingw-packages-status.log
+
+          git diff HEAD -- ':!mingw-w64-busybox/src' \
+                           ':!mingw-w64-busybox/pkg' \
+                           ':!mingw-w64-busybox/*.pkg.tar.xz' \
+            >mingw-packages-tracked.patch || true
+
+          mapfile -t untracked < <(
+            git ls-files --others --exclude-standard -- mingw-w64-busybox/
+          )
+          # Strip out things makepkg produced that are not Copilot's work.
+          filtered=()
+          for f in "${untracked[@]}"; do
+            case "$f" in
+              mingw-w64-busybox/src/*) ;;
+              mingw-w64-busybox/pkg/*) ;;
+              mingw-w64-busybox/*.pkg.tar.*) ;;
+              mingw-w64-busybox/*.log) ;;
+              *) filtered+=("$f") ;;
+            esac
+          done
+          if [ "${#filtered[@]}" -gt 0 ]; then
+            tar czf mingw-packages-untracked.tar.gz "${filtered[@]}"
+          fi
+
       - name: Archive Copilot session state
         if: always()
         shell: bash
@@ -143,8 +251,15 @@ jobs:
           if-no-files-found: warn
           path: |
             build.log
+            toolchain-versions.log
             copilot-prompt.md
             copilot-diagnosis-*.md
             copilot-session-*.tar.gz
+            busybox-w32-status.log
+            busybox-w32-tracked.patch
+            busybox-w32-untracked.tar.gz
+            mingw-packages-status.log
+            mingw-packages-tracked.patch
+            mingw-packages-untracked.tar.gz
             mingw-w64-busybox/verify-build.log
             mingw-w64-busybox/*.pkg.tar.xz
