@@ -45,6 +45,70 @@ evolves, so even if the session is interrupted, the most recent
 version captures everything you have learned so far. The worst
 outcome is a session that did real work but left no breadcrumbs.
 
+## Known fixes already applied (read this BEFORE forming hypotheses)
+
+The PKGBUILD's `source=` line points at the
+`clangarm64-and-i686-build-fixes` branch of
+`git-for-windows/busybox-w32`, not main. That branch already
+carries surgical fixes for every failure mode that previously
+broke the mingw32 and clangarm64 builds, so a new build failure
+on those axes is much more likely to be either (a) a regression
+in a freshly bumped toolchain that exposes a new diagnostic or
+(b) a bug in one of the existing fixes than it is to be a re-
+occurrence of the historical problem. The fixes that branch
+carries are:
+
+- `Makefile`: fall back to `llvm-ar` when both `$(CROSS_COMPILE)ar`
+  and `$(CROSS_COMPILE)gcc-ar` are absent. Solves the
+  `aarch64-w64-mingw32-gcc-ar: command not found` failure on
+  clangarm64.
+- `win32/mingw.c` and `win32/process.c`: add the missing
+  `FAST_FUNC` qualifier on `mingw_pathconv`, `realpath`, and
+  `initialize_critical_sections`. Solves the
+  `conflicting types for 'mingw_pathconv'` family of failures
+  that the i686 build hits with GCC 14+.
+- `win32/mingw.c`: use the actually-initialized `resolved_path`
+  parameter inside `wrealpath()` instead of an uninitialized
+  local `real_path`.
+- `win32/mingw.c`: gate `#pragma GCC optimize` and
+  `#pragma GCC reset_options` behind `!defined(__clang__)` so
+  clang does not warn about pragmas it cannot implement.
+- `shell/ash.c`: parenthesize `!target == ABS_DRIVE` so the
+  expression no longer depends on `ABS_DRIVE` being enumerator
+  zero (silences clang `-Wlogical-not-parentheses`).
+- `archival/tar.c`, `coreutils/install.c`, `coreutils/rm.c`,
+  `coreutils/mkdir.c`: parenthesize the enum constants
+  `OPT_COMPRESS` and `FILEUTILS_VERBOSE` when they appear in
+  `&&` / `||` operands (silences clang
+  `-Wint-in-bool-context`).
+- `coreutils/id.c`: convert the `if (ENABLE_FEATURE_CLEAN_UP &&
+  !ENABLE_PLATFORM_MINGW32) free(groups);` runtime guard to a
+  preprocessor `#if`, so clang does not type-check the dead
+  `free()` against MINGW32's stack-array `groups`.
+- `miscutils/bc.c`: initialize the placeholder label indices
+  `ip_idx` and `ip2_idx` to `0` before they are passed by
+  address.
+- `libbb/hash_md5_sha.c`: gate the `rotl32` / `rotr32` /
+  `rotr64` helpers behind `#if !ENABLE_FEATURE_USE_CNG_API`
+  (sha3's `rotl64` stays unconditional).
+- `coreutils/od_bloaty.c`: scope a deliberate
+  `-Winitializer-overrides` suppression around the
+  `fp_type_size` table.
+
+Additionally the MINGW-packages `PKGBUILD` passes
+`-Wno-unused-command-line-argument` in `CFLAGS` when `$CC`
+contains `clang`, because the clang driver re-emits
+compile-only flags during the link step.
+
+If the failure you are diagnosing matches one of those exactly
+(same file, same line, same warning) the right answer is
+almost never "apply the same fix again under a new wrapping";
+it is "check whether the fix in the branch is actually being
+applied, then explain why it stopped working". Cross-check
+`mingw-w64-busybox/src/busybox-w32` against the branch tip
+(`git -C mingw-w64-busybox/src/busybox-w32 log -1`) before
+deciding the bug is novel.
+
 ## Operating principles (READ FIRST, mandatory)
 
 ### Verify, do not guess
