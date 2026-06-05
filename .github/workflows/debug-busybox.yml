@@ -279,3 +279,4 @@ jobs:
             mingw-packages-untracked.tar.gz
             mingw-w64-busybox/verify-build.log
             mingw-w64-busybox/*.pkg.tar.*
+            verify-*.log
