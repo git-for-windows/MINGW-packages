@@ -262,4 +262,4 @@ jobs:
             mingw-packages-tracked.patch
             mingw-packages-untracked.tar.gz
             mingw-w64-busybox/verify-build.log
-            mingw-w64-busybox/*.pkg.tar.xz
+            mingw-w64-busybox/*.pkg.tar.*
