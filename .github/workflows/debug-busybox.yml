@@ -167,6 +167,22 @@ jobs:
               | tee busybox-w32-status.log
             exit 0
           fi
+
+          # makepkg's `git+...` source clones with --shared, which
+          # writes an MSYS2-style alternates path (e.g.
+          # /c/a/.../objects) into .git/objects/info/alternates.
+          # Git for Windows reads alternates without MSYS2 path
+          # translation, so a `git diff` from a non-bash context dies
+          # with "unable to normalize alternate object path". Replace
+          # the recorded absolute path with the layout-invariant
+          # relative one (the bare clone makepkg creates always sits
+          # at mingw-w64-busybox/busybox-w32, four levels up from the
+          # worktree's .git/objects/).
+          alt="$src/.git/objects/info/alternates"
+          if [ -f "$alt" ]; then
+            echo '../../../../busybox-w32/objects' >"$alt"
+            echo "Rewrote alternates to relative form."
+          fi
           {
             echo "=== git status ==="
             git -C "$src" status --porcelain=v1
