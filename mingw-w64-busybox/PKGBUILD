@@ -52,6 +52,17 @@ build() {
   test "a$F" = "a$CPPFLAGS" ||
   CPPFLAGS="$F${CPPFLAGS##* -D__USE_MINGW_ANSI_STDIO=*}"
 
+  # On the clang-based toolchains, the driver forwards compile-only
+  # flags (e.g. -fno-builtin-stpcpy, -fno-ident) to the final link
+  # step; clang then warns about every one of them as
+  # `-Wunused-command-line-argument`, which `-Werror` turns into a
+  # fatal error. The fix is a packaging concern (busybox-w32 itself
+  # is compiler-agnostic), so suppress the warning here rather than
+  # in the source tree.
+  case "$CC" in
+  *clang*) CFLAGS="$CFLAGS -Wno-unused-command-line-argument" ;;
+  esac
+
   make clean
   make
 }
