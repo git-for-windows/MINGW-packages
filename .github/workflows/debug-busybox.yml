@@ -35,7 +35,7 @@ jobs:
   reproduce-and-diagnose:
     name: build busybox (${{ matrix.mingw_arch }})
     runs-on: ${{ matrix.runs_on }}
-    timeout-minutes: 90
+    timeout-minutes: 180
     strategy:
       fail-fast: false
       matrix:
@@ -131,7 +131,7 @@ jobs:
 
       - name: Run Copilot CLI to diagnose the failure
         if: failure() && steps.build.conclusion == 'failure'
-        timeout-minutes: 30
+        timeout-minutes: 120
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
