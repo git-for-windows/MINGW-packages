@@ -13,7 +13,7 @@ url="https://github.com/git-for-windows/busybox-w32"
 license=('GPL2')
 
 options=('!strip')
-source=("git+https://github.com/git-for-windows/busybox-w32")
+source=("git+https://github.com/git-for-windows/busybox-w32#branch=clangarm64-and-i686-build-fixes")
 sha256sums=('SKIP')
 
 pkgver() {
