@@ -38,7 +38,8 @@ makedepends=('git' 'openssh' 'ca-certificates' 'xmlto' 'docbook-xsl' 'docbook-xs
 	"${MINGW_PACKAGE_PREFIX}-expat>=2.0"
 	"${MINGW_PACKAGE_PREFIX}-openssl"
 	"${MINGW_PACKAGE_PREFIX}-pcre2"
-	"${MINGW_PACKAGE_PREFIX}-asciidoctor")
+	"${MINGW_PACKAGE_PREFIX}-asciidoctor"
+	"${MINGW_PACKAGE_PREFIX}-rust")
 
 source=("${_realname}"::"git+https://github.com/git-for-windows/git.git#tag=v$tag"
 	'git-for-windows.ico'
@@ -83,6 +84,10 @@ STRIP=
 STRIP_OPTS=
 LDFLAGS=
 
+if test -n "$NO_RUST"
+then
+  makedepends=("${makedepends[@]/${MINGW_PACKAGE_PREFIX}-rust}")
+fi
 if test -z "$WITH_PDBS"
 then
   options+=('strip')
