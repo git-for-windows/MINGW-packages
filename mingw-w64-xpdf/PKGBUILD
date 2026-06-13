@@ -4,65 +4,86 @@ _realname=xpdf
 pkgbase="mingw-w64-${_realname}-tools"
 pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}-tools")
 #conflicts=("${MINGW_PACKAGE_PREFIX}-poppler")
-pkgver=4.00
+pkgver=4.06
 pkgrel=1
 pkgdesc="Utilities for PDF files (mingw-w64)"
 arch=('any')
-license=('GPL2+')
-url="http://foolabs.com/xpdf/"
-makedepends=("${MINGW_PACKAGE_PREFIX}-gcc"
-             "${MINGW_PACKAGE_PREFIX}-cmake")
-depends=("${MINGW_PACKAGE_PREFIX}-zlib")
-options=('strip')
-source=(https://dl.xpdfreader.com/old/xpdf-${pkgver}.tar.gz{,.sig}
-        001-cmake.patch
+mingw_arch=('mingw64' 'ucrt64' 'clang64' 'clangarm64')
+url="https://www.xpdfreader.com/"
+msys2_references=(
+  "cpe: cpe:/a:xpdf:xpdf"
+  "cpe: cpe:/a:xpdf_project:xpdf"
+  "cpe: cpe:/a:xpdfreader:xpdf"
+)
+license=('spdx:GPL-2.0-only OR GPL-3.0-only')
+makedepends=("${MINGW_PACKAGE_PREFIX}-cc"
+             "${MINGW_PACKAGE_PREFIX}-cmake"
+             "${MINGW_PACKAGE_PREFIX}-ninja")
+depends=("${MINGW_PACKAGE_PREFIX}-cc-libs")
+source=(https://dl.xpdfreader.com/xpdf-${pkgver}.tar.gz{,.sig}
         002-xpdf-4.00-64bit.patch
-        003-xpdf-4.00-libpaperfix.patch
-        004-xpdf-4.00-man-path-fix.patch
         005-xpdf-4.00-permissions.patch
         006-xpdf-4.00-only-tools.patch)
-validpgpkeys=('A56006CA75CF8B13FA2F120DF4825F5397271342') # "-Xpdf- <xpdf@xpdfreader.com>"
-sha256sums=('ff3d92c42166e35b1ba6aec9b5f0adffb5fc05a3eb95dc49505b6e344e4216d6'
+sha256sums=('1c38f527c46caee0f712386d42a885b96a31ed9ce11904e872559859894d137e'
             'SKIP'
-            'df71b83964dfb7ae1c5ce2d37c6634bbda27288609e7a5248e2142f0ddbec2c0'
-            '80e2f2de83904db8916972c6afd49b2868879517eb99ec8ee44ca06c158629d7'
-            '4a6f8a7c4d7dd8dc45a5af7fbe305d41c95714618bf2c2ba5a396f492657c61a'
-            '0e08bba11047b5e2e38866cf4b876d674a300b928b6603f27a3ffa124104fb24'
-            '22e0afda66f036cea8643252762e1391ed078102dd5f76f8cf862976b4b37089'
-            '90b9393d65997d075e6044f8156404f0fdc03444ee2f2208cfabd0fe94ecf267')
+            '6a9999f85bfe40feca8fc56db13149b14024ea5dd6b33262cc723efc072700db'
+            '85d7c4bb5798d09f42f88cb09fe2c7762daf6395e30804132aa39bcf28b40b31'
+            '636b9caa729b6fe686e8b3dd1c1bc91d299687bbd81d0dcd5c4018b7fe255fe8')
+validpgpkeys=('A56006CA75CF8B13FA2F120DF4825F5397271342')
+
+apply_patch_with_msg() {
+  for _patch in "$@"
+  do
+    msg2 "Applying ${_patch}"
+    patch -Nbp1 -i "${srcdir}/${_patch}"
+  done
+}
 
 prepare() {
   cd ${_realname}-${pkgver}
-  patch -p1 -i ${srcdir}/001-cmake.patch
-  patch -p1 -i ${srcdir}/002-xpdf-4.00-64bit.patch
-  patch -p1 -i ${srcdir}/003-xpdf-4.00-libpaperfix.patch
-  patch -p1 -i ${srcdir}/004-xpdf-4.00-man-path-fix.patch
-  patch -p1 -i ${srcdir}/005-xpdf-4.00-permissions.patch
-  patch -p1 -i ${srcdir}/006-xpdf-4.00-only-tools.patch
+  apply_patch_with_msg \
+    002-xpdf-4.00-64bit.patch \
+    005-xpdf-4.00-permissions.patch \
+    006-xpdf-4.00-only-tools.patch
 }
 
 build() {
-  [[ -d ${srcdir}/build-${MINGW_CHOST} ]] && rm -rf ${srcdir}/build-${MINGW_CHOST}
-  mkdir build-${MINGW_CHOST} && cd ${srcdir}/build-${MINGW_CHOST}
+set -x
+  mkdir -p build-${MSYSTEM} && cd "${srcdir}"/build-${MSYSTEM}
+
+  declare -a _extra_config
+  if check_option "debug" "n"; then
+    _extra_config+=("-DCMAKE_BUILD_TYPE=Release")
+  else
+    _extra_config+=("-DCMAKE_BUILD_TYPE=Debug")
+  fi
+
   MSYS2_ARG_CONV_EXCL="-DCMAKE_INSTALL_PREFIX" \
   ${MINGW_PREFIX}/bin/cmake.exe \
-    -G"MSYS Makefiles" \
+    -GNinja \
     -DCMAKE_INSTALL_PREFIX=${MINGW_PREFIX} \
+    -DA4_PAPER=ON \
     -DMULTITHREADED=ON \
-    -DCMAKE_BUILD_TYPE=Release \
+    -DOPI_SUPPORT=ON \
+    -DSPLASH_CMYK=ON \
+    -DXPDFWIDGET_PRINTING=ON \
+    "${_extra_config[@]}" \
     ../${_realname}-${pkgver}
 
-  make
+  # Copy xpdf-icon.ico to build directory to fix building with GCC
+  cp ../${_realname}-${pkgver}/xpdf-qt/xpdf-icon.ico .
+
+  ${MINGW_PREFIX}/bin/cmake --build .
 }
 
 package() {
-  cd ${srcdir}/build-${MINGW_CHOST}
-  make DESTDIR="${pkgdir}" install
+  cd "${srcdir}"/build-${MSYSTEM}
+  DESTDIR="${pkgdir}" ${MINGW_PREFIX}/bin/cmake --install .
 
-  cd ${srcdir}/${_realname}-${pkgver}
+  cd "${srcdir}"/${_realname}-${pkgver}
   install -Dm 644 xpdf-qt/xpdf-icon.svg "${pkgdir}${MINGW_PREFIX}/share/pixmaps/xpdf.svg"
   install -Dm 644 README CHANGES -t "${pkgdir}${MINGW_PREFIX}/share/doc/${pkgname}"
 
-  install -Dm644 ${srcdir}/${_realname}-${pkgver}/COPYING ${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/COPYING
-  install -Dm644 ${srcdir}/${_realname}-${pkgver}/COPYING3 ${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/COPYING3
+  install -Dm644 "${srcdir}"/${_realname}-${pkgver}/COPYING "${pkgdir}"${MINGW_PREFIX}/share/licenses/${_realname}/COPYING
+  install -Dm644 "${srcdir}"/${_realname}-${pkgver}/COPYING3 "${pkgdir}"${MINGW_PREFIX}/share/licenses/${_realname}/COPYING3
 }

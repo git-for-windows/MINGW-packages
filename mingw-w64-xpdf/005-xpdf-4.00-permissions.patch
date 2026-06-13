@@ -1,7 +1,53 @@
-diff -up xpdf-4.00/xpdf/PDFCore.cc.permissions xpdf-4.00/xpdf/PDFCore.cc
-diff -up xpdf-4.00/xpdf/pdfimages.cc.permissions xpdf-4.00/xpdf/pdfimages.cc
---- xpdf-4.00/xpdf/pdfimages.cc.permissions	2017-08-08 19:22:50.000000000 -0400
-+++ xpdf-4.00/xpdf/pdfimages.cc	2017-08-16 18:08:04.474032500 -0400
+From 10e04941885c0f1661721a29520fc18d62c30e73 Mon Sep 17 00:00:00 2001
+From: Alexey Pavlov <alexpux@gmail.com>
+Date: Fri, 18 May 2018 10:33:40 +0300
+Subject: [PATCH 2/3] 005-xpdf-4.00-permissions
+
+---
+ xpdf-qt/QtPDFCore.cc  | 2 ++
+ xpdf-qt/XpdfWidget.cc | 4 ++++
+ xpdf/pdfimages.cc     | 4 ++++
+ xpdf/pdftohtml.cc     | 2 ++
+ xpdf/pdftops.cc       | 4 ++++
+ xpdf/pdftotext.cc     | 4 ++++
+ 6 files changed, 20 insertions(+)
+
+diff --git a/xpdf-qt/QtPDFCore.cc b/xpdf-qt/QtPDFCore.cc
+index f98c565..f432be9 100644
+--- a/xpdf-qt/QtPDFCore.cc
++++ b/xpdf-qt/QtPDFCore.cc
+@@ -494,9 +494,11 @@ QString QtPDFCore::getSelectedTextQString() {
+   QString qs;
+   int i;
+ 
++#ifdef ENFORCE_PERMISSIONS
+   if (!doc->okToCopy()) {
+     return "";
+   }
++#endif
+   if (!(s = getSelectedText())) {
+     return "";
+   }
+diff --git a/xpdf-qt/XpdfWidget.cc b/xpdf-qt/XpdfWidget.cc
+index 3be50d2..eced8ba 100644
+--- a/xpdf-qt/XpdfWidget.cc
++++ b/xpdf-qt/XpdfWidget.cc
+@@ -1526,7 +1526,11 @@ bool XpdfWidget::okToExtractText() const {
+     if (!core->getDoc()) {
+       return false;
+     }
++#ifdef ENFORCE_PERMISSIONS
+     return (bool)core->getDoc()->okToCopy();
++#else
++    return true;
++#endif
+   } catch (GMemException e) {
+     return false;
+   }
+diff --git a/xpdf/pdfimages.cc b/xpdf/pdfimages.cc
+index 2924bdf..c878f9e 100644
+--- a/xpdf/pdfimages.cc
++++ b/xpdf/pdfimages.cc
 @@ -4,6 +4,8 @@
  //
  // Copyright 1998-2003 Glyph & Cog, LLC
@@ -11,12 +57,12 @@ diff -up xpdf-4.00/xpdf/pdfimages.cc.permissions xpdf-4.00/xpdf/pdfimages.cc
  //========================================================================
  
  #include <aconf.h>
-@@ -126,12 +128,14 @@ int main(int argc, char *argv[]) {
+@@ -153,12 +155,14 @@ int main(int argc, char *argv[]) {
    }
  
    // check for copy permission
 +#ifdef ENFORCE_PERMISSIONS
-   if (!doc->okToCopy()) {
+   if (!listOnly && !doc->okToCopy()) {
      error(errNotAllowed, -1,
  	  "Copying of images from this document is not allowed.");
      exitCode = 3;
@@ -26,10 +72,11 @@ diff -up xpdf-4.00/xpdf/pdfimages.cc.permissions xpdf-4.00/xpdf/pdfimages.cc
  
    // get page range
    if (firstPage < 1)
-diff -up xpdf-4.00/xpdf/pdftohtml.cc.permissions xpdf-4.00/xpdf/pdftohtml.cc
---- xpdf-4.00/xpdf/pdftohtml.cc.permissions	2017-08-16 18:10:36.656189850 -0400
-+++ xpdf-4.00/xpdf/pdftohtml.cc	2017-08-16 18:11:06.127445692 -0400
-@@ -137,6 +137,7 @@ int main(int argc, char *argv[]) {
+diff --git a/xpdf/pdftohtml.cc b/xpdf/pdftohtml.cc
+index 04044e8..8f759fb 100644
+--- a/xpdf/pdftohtml.cc
++++ b/xpdf/pdftohtml.cc
+@@ -183,6 +183,7 @@ int main(int argc, char *argv[]) {
      goto err1;
    }
  
@@ -37,7 +84,7 @@ diff -up xpdf-4.00/xpdf/pdftohtml.cc.permissions xpdf-4.00/xpdf/pdftohtml.cc
    // check for copy permission
    if (!doc->okToCopy()) {
      error(errNotAllowed, -1,
-@@ -144,6 +145,7 @@ int main(int argc, char *argv[]) {
+@@ -190,6 +191,7 @@ int main(int argc, char *argv[]) {
      exitCode = 3;
      goto err1;
    }
@@ -45,9 +92,10 @@ diff -up xpdf-4.00/xpdf/pdftohtml.cc.permissions xpdf-4.00/xpdf/pdftohtml.cc
  
    // get page range
    if (firstPage < 1) {
-diff -up xpdf-4.00/xpdf/pdftops.cc.permissions xpdf-4.00/xpdf/pdftops.cc
---- xpdf-4.00/xpdf/pdftops.cc.permissions	2017-08-08 19:22:50.000000000 -0400
-+++ xpdf-4.00/xpdf/pdftops.cc	2017-08-16 18:08:04.475032475 -0400
+diff --git a/xpdf/pdftops.cc b/xpdf/pdftops.cc
+index 685b3aa..ae76f85 100644
+--- a/xpdf/pdftops.cc
++++ b/xpdf/pdftops.cc
 @@ -4,6 +4,8 @@
  //
  // Copyright 1996-2003 Glyph & Cog, LLC
@@ -57,7 +105,7 @@ diff -up xpdf-4.00/xpdf/pdftops.cc.permissions xpdf-4.00/xpdf/pdftops.cc
  //========================================================================
  
  #include <aconf.h>
-@@ -321,12 +323,14 @@ int main(int argc, char *argv[]) {
+@@ -337,12 +339,14 @@ int main(int argc, char *argv[]) {
      goto err1;
    }
  
@@ -72,9 +120,10 @@ diff -up xpdf-4.00/xpdf/pdftops.cc.permissions xpdf-4.00/xpdf/pdftops.cc
  
    // construct PostScript file name
    if (argc == 3) {
-diff -up xpdf-4.00/xpdf/pdftotext.cc.permissions xpdf-4.00/xpdf/pdftotext.cc
---- xpdf-4.00/xpdf/pdftotext.cc.permissions	2017-08-08 19:22:50.000000000 -0400
-+++ xpdf-4.00/xpdf/pdftotext.cc	2017-08-16 18:08:04.475032475 -0400
+diff --git a/xpdf/pdftotext.cc b/xpdf/pdftotext.cc
+index 470a901..efd8975 100644
+--- a/xpdf/pdftotext.cc
++++ b/xpdf/pdftotext.cc
 @@ -4,6 +4,8 @@
  //
  // Copyright 1997-2013 Glyph & Cog, LLC
@@ -84,7 +133,7 @@ diff -up xpdf-4.00/xpdf/pdftotext.cc.permissions xpdf-4.00/xpdf/pdftotext.cc
  //========================================================================
  
  #include <aconf.h>
-@@ -198,6 +200,7 @@ int main(int argc, char *argv[]) {
+@@ -248,6 +250,7 @@ int main(int argc, char *argv[]) {
      goto err2;
    }
  
@@ -92,7 +141,7 @@ diff -up xpdf-4.00/xpdf/pdftotext.cc.permissions xpdf-4.00/xpdf/pdftotext.cc
    // check for copy permission
    if (!doc->okToCopy()) {
      error(errNotAllowed, -1,
-@@ -205,6 +208,7 @@ int main(int argc, char *argv[]) {
+@@ -255,6 +258,7 @@ int main(int argc, char *argv[]) {
      exitCode = 3;
      goto err2;
    }
@@ -100,33 +149,3 @@ diff -up xpdf-4.00/xpdf/pdftotext.cc.permissions xpdf-4.00/xpdf/pdftotext.cc
  
    // construct text file name
    if (argc == 3) {
-diff -up xpdf-4.00/xpdf-qt/QtPDFCore.cc.permissions xpdf-4.00/xpdf-qt/QtPDFCore.cc
---- xpdf-4.00/xpdf-qt/QtPDFCore.cc.permissions	2017-08-16 18:09:45.169489907 -0400
-+++ xpdf-4.00/xpdf-qt/QtPDFCore.cc	2017-08-16 18:10:14.375752439 -0400
-@@ -429,9 +429,11 @@ QString QtPDFCore::getSelectedTextQStrin
-   QChar c;
-   int i;
- 
-+#ifdef ENFORCE_PERMISSIONS
-   if (!doc->okToCopy()) {
-     return "";
-   }
-+#endif
-   if (!(s = getSelectedText())) {
-     return "";
-   }
-diff -up xpdf-4.00/xpdf-qt/XpdfWidget.cc.permissions xpdf-4.00/xpdf-qt/XpdfWidget.cc
---- xpdf-4.00/xpdf-qt/XpdfWidget.cc.permissions	2017-08-16 18:12:40.775055809 -0400
-+++ xpdf-4.00/xpdf-qt/XpdfWidget.cc	2017-08-16 18:12:45.835928020 -0400
-@@ -1399,7 +1399,11 @@ bool XpdfWidget::okToExtractText() const
-     if (!core->getDoc()) {
-       return false;
-     }
-+#ifdef ENFORCE_PERMISSIONS
-     return (bool)core->getDoc()->okToCopy();
-+#else
-+    return true;
-+#endif
-   } catch (GMemException e) {
-     return false;
-   }
