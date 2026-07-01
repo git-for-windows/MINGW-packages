@@ -6,7 +6,7 @@ pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}"
          "${MINGW_PACKAGE_PREFIX}-${_realname}-gnutls"
          "${MINGW_PACKAGE_PREFIX}-${_realname}-winssl")
 pkgver=8.21.0
-pkgrel=1
+pkgrel=2
 pkgdesc="Command line tool and library for transferring data with URLs (mingw-w64)"
 arch=('any')
 mingw_arch=('mingw32' 'mingw64' 'ucrt64' 'clang64' 'clang32' 'clangarm64')
@@ -154,6 +154,7 @@ do_build() {
     --enable-sspi \
     --enable-ldap \
     --enable-ldaps \
+	--enable-ntlm \
     --with-brotli \
     --with-ldap-lib=wldap32 \
     --with-libssh2 \
