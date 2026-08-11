@@ -37,7 +37,8 @@ source=("https://github.com/curl/curl/releases/download/${_realname}-${pkgver//.
         "0001-Make-cURL-relocatable.patch"
         "0002-Hack-make-relocation-work-inside-libexec-git-core-an.patch"
         "0003-auth-upgrade-SSPI-identity-to-SEC_WINNT_AUTH_IDENTIT.patch"
-        "0004-spnego-windows-disallow-NTLM-via-SPNEGO.patch")
+        "0004-spnego-windows-disallow-NTLM-via-SPNEGO.patch"
+        "https://github.com/curl/curl/commit/981c9b062a375fc9a7994720945f339507d4d446.patch")
 sha256sums=('ad6f2f94934b38e31e48272833c99b891d045b4565fe942a53fbd27bd3910e16'
             'SKIP'
             '08209cbf1633fa92eae7e5d28f95f8df9d6184cc20fa878c99aec4709bb257fd'
@@ -45,7 +46,8 @@ sha256sums=('ad6f2f94934b38e31e48272833c99b891d045b4565fe942a53fbd27bd3910e16'
             '13ce41a26360cbd03a16bc03f1da4dc1503ce3f37181c2bfb66a27932d54f9e6'
             'cc5c2c35cc98e7ca2bf58e661ec2107dfcca60d7e4407927636ea5c4f445ae17'
             'b4266617b06ef06be1367f1100039169442451e2a196871d2986dad9ed62d560'
-            '9f24589dc825b7bd0678ce67069fb7dcd2070c870860180481d3b25ae9135ad9')
+            '9f24589dc825b7bd0678ce67069fb7dcd2070c870860180481d3b25ae9135ad9'
+            '5077e91dabab9d66aa86f346a44396141a7a1d75cc5f61329625c96c1e82dc28')
 validpgpkeys=('27EDEAF22F3ABCEB50DB9A125CC908FDB71E12C2')  # Daniel Stenberg
 
 if test -z "$WITHOUT_ALTERNATES"
@@ -97,7 +99,8 @@ prepare() {
     0001-Make-cURL-relocatable.patch \
     0002-Hack-make-relocation-work-inside-libexec-git-core-an.patch \
     0003-auth-upgrade-SSPI-identity-to-SEC_WINNT_AUTH_IDENTIT.patch \
-    0004-spnego-windows-disallow-NTLM-via-SPNEGO.patch
+    0004-spnego-windows-disallow-NTLM-via-SPNEGO.patch \
+    981c9b062a375fc9a7994720945f339507d4d446.patch
 
   autoreconf -vfi
 }
