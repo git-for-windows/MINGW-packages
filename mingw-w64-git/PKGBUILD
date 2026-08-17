@@ -139,6 +139,17 @@ build() {
   # Guarantee that `GIT-VERSION-GEN` determines the version
   unset GIT_VERSION
 
+  # Reproducible builds: outside a release tag `GIT-VERSION-GEN` falls back
+  # to `git describe --dirty`, and git.rc / GIT-VERSION-FILE / version-def.h
+  # each re-run it at a slightly different worktree state, so they can
+  # disagree between two builds. GIT-VERSION-GEN consults a `version` file
+  # before that fallback, so drop one to pin the version to the release tag.
+  printf "v%s\n" "$tag" > version
+  # git.manifest is embedded verbatim as the RT_MANIFEST resource of every
+  # standalone executable; normalize its line endings so the embedded bytes
+  # do not depend on the checkout configuration.
+  sed -i 's/\r$//' compat/win32/git.manifest
+
   # Make git-bash.exe first, to avoid triggering `* new link flags`
   rm -f *.res &&
   make -f ../mingw-w64-git.mak git-wrapper.exe \
@@ -180,6 +191,13 @@ build() {
     make -f ../mingw-w64-git.mak print-builtins | tr ' ' '\n' > builtins.txt
     ;;
   esac
+
+  # Reproducible builds: the linker (or cv2pdb on GitHub Actions) stamps a
+  # random CodeView PDB GUID into the .debug section of every executable.
+  # Drop it at the very end of build(), after the PDB/strip step, so a
+  # rebuild on the same SDK snapshot is byte-identical. objcopy accepts only
+  # one input file, so run it once per executable (in place).
+  find . -name '*.exe' -exec objcopy --remove-section=.debug {} \;
 }
 
 package_git () {
