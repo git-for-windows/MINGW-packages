@@ -4,7 +4,7 @@ _realname=openssl
 pkgbase=mingw-w64-${_realname}
 pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}"
 	"${MINGW_PACKAGE_PREFIX}-${_realname}-pdb")
-pkgver=3.5.7
+pkgver=3.5.8
 pkgrel=1
 pkgdesc="The Open Source toolkit for Secure Sockets Layer and Transport Layer Security (mingw-w64)"
 arch=('any')
@@ -30,7 +30,7 @@ source=("https://github.com/openssl/openssl/releases/download/openssl-${pkgver}/
         '0009-Also-treat-Cygwin-Perl-like-MSYS-Perl-in-test-skip-g.patch'
         'pathtools.c'
         'pathtools.h')
-sha256sums=('a8c0d28a529ca480f9f36cf5792e2cd21984552a3c8e4aa11a24aa31aeac98e8'
+sha256sums=('a8f84a39918ec6415ce765d9b429d313ba97b8143169c172e734b9514464f5b2'
             'SKIP'
             '8503b2d481e8392a67152d529cfbb01cc9b9c4a8d7a529b202f3a1a385058c34'
             'e64661d67c47c1f8b5a409a230fd5a7a97c5b9070ceeefdc469788cf85068c36'
