@@ -5,8 +5,8 @@ pkgbase=mingw-w64-${_realname}
 pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}"
          "${MINGW_PACKAGE_PREFIX}-${_realname}-gnutls"
          "${MINGW_PACKAGE_PREFIX}-${_realname}-winssl")
-pkgver=8.21.0
-pkgrel=2
+pkgver=8.22.0
+pkgrel=1
 pkgdesc="Command line tool and library for transferring data with URLs (mingw-w64)"
 arch=('any')
 mingw_arch=('mingw32' 'mingw64' 'ucrt64' 'clang64' 'clang32' 'clangarm64')
@@ -35,17 +35,13 @@ source=("https://github.com/curl/curl/releases/download/${_realname}-${pkgver//.
         "pathtools.c"
         "pathtools.h"
         "0001-Make-cURL-relocatable.patch"
-        "0002-Hack-make-relocation-work-inside-libexec-git-core-an.patch"
-        "0003-auth-upgrade-SSPI-identity-to-SEC_WINNT_AUTH_IDENTIT.patch"
-        "0004-spnego-windows-disallow-NTLM-via-SPNEGO.patch")
-sha256sums=('ad6f2f94934b38e31e48272833c99b891d045b4565fe942a53fbd27bd3910e16'
+        "0002-Hack-make-relocation-work-inside-libexec-git-core-an.patch")
+sha256sums=('5d956a6a22b3c279f50c421ee5d3c9e9d660cb6f115dcf881b579e952130549c'
             'SKIP'
             '08209cbf1633fa92eae7e5d28f95f8df9d6184cc20fa878c99aec4709bb257fd'
             '965d3921ec4fdeec94a2718bc2c85ce5e1a00ea0e499330a554074a7ae15dfc6'
-            '13ce41a26360cbd03a16bc03f1da4dc1503ce3f37181c2bfb66a27932d54f9e6'
-            'cc5c2c35cc98e7ca2bf58e661ec2107dfcca60d7e4407927636ea5c4f445ae17'
-            'b4266617b06ef06be1367f1100039169442451e2a196871d2986dad9ed62d560'
-            '9f24589dc825b7bd0678ce67069fb7dcd2070c870860180481d3b25ae9135ad9')
+            'f2a74ed774642fae3ca1a1302355b4a02604fca3ece29d405e44d7208de50e59'
+            'a8c612c0f9d7ca984d1b3507bdc07cb69f6d396108b9ec1438e10a41778bec9a')
 validpgpkeys=('27EDEAF22F3ABCEB50DB9A125CC908FDB71E12C2')  # Daniel Stenberg
 
 if test -z "$WITHOUT_ALTERNATES"
@@ -96,8 +92,6 @@ prepare() {
   apply_patch_with_msg \
     0001-Make-cURL-relocatable.patch \
     0002-Hack-make-relocation-work-inside-libexec-git-core-an.patch \
-    0003-auth-upgrade-SSPI-identity-to-SEC_WINNT_AUTH_IDENTIT.patch \
-    0004-spnego-windows-disallow-NTLM-via-SPNEGO.patch
 
   autoreconf -vfi
 }

@@ -1,4 +1,4 @@
-From 0fa2dbc3f8eee15c4b8d094795b832b129bd3fca Mon Sep 17 00:00:00 2001
+From 1f7d6909020896dd4e4982bfe3b87be16b40f94f Mon Sep 17 00:00:00 2001
 From: Johannes Schindelin <johannes.schindelin@gmx.de>
 Date: Wed, 31 Oct 2018 10:52:59 +0100
 Subject: [PATCH 2/N] Hack: make relocation work inside libexec/git-core/ and
@@ -30,10 +30,10 @@ Signed-off-by: Johannes Schindelin <johannes.schindelin@gmx.de>
  1 file changed, 20 insertions(+), 1 deletion(-)
 
 diff --git a/lib/vtls/vtls_config.c b/lib/vtls/vtls_config.c
-index ee70c9a549..9fbbea34da 100644
+index e61e4d782c..e0da56852a 100644
 --- a/lib/vtls/vtls_config.c
 +++ b/lib/vtls/vtls_config.c
-@@ -306,10 +306,29 @@ CURLcode Curl_ssl_easy_config_complete(struct Curl_easy *data,
+@@ -297,10 +297,29 @@ CURLcode Curl_ssl_easy_config_complete(struct Curl_easy *data,
      get_dll_path(relocated_bundle, path_max);
      strip_n_suffix_folders(relocated_bundle, 1);
      strncat(relocated_bundle, "/", path_max - 1);
@@ -62,5 +62,5 @@ index ee70c9a549..9fbbea34da 100644
 +        strcat(relocated_bundle + len - 28, "/etc/ssl/certs/ca-bundle.crt");
 +    }
  #endif /* defined(__MINGW32__) */
-     if(!sslc->custom_cafile && !set->str[STRING_SSL_CAFILE]) {
+     if(!sslc->custom_cafile && !CURL_EASY_STR(data, STRING_SSL_CAFILE)) {
  #ifdef __MINGW32__
