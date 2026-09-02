@@ -52,6 +52,7 @@ validpgpkeys=(
   'B7C1C14360F353A36862E4D5231C84CDDCC69C45' # Paul Dale <pauli@openssl.org>
   'EFC0A467D613CB83C7ED6D30D894E2CE8B3D79F5' # OpenSSL Management Committee <openssl-omc@openssl.org>
   'BA5473A2B0587B07FB27CF2D216094DFD0CB81EF' # OpenSSL <openssl@openssl.org>
+  'B146647E45A7B33947AB226B2A2C87D161692D40' # OpenSSL <openssl@openssl.org>
 )
 
 # Helper macros to help make tasks easier #
