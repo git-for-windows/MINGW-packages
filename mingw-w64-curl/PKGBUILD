@@ -16,8 +16,7 @@ _cert_depends=("${MINGW_PACKAGE_PREFIX}-ca-certificates"
                "${MINGW_PACKAGE_PREFIX}-libssh2")
 _openssl_depends=("${MINGW_PACKAGE_PREFIX}-openssl"
                   "${MINGW_PACKAGE_PREFIX}-nghttp2")
-_gnutls_depends=("${MINGW_PACKAGE_PREFIX}-rtmpdump"
-                 "${MINGW_PACKAGE_PREFIX}-gnutls")
+_gnutls_depends=("${MINGW_PACKAGE_PREFIX}-gnutls")
 makedepends=("${MINGW_PACKAGE_PREFIX}-cc"
              "${MINGW_PACKAGE_PREFIX}-autotools"
              "${_cert_depends[@]}"
@@ -122,7 +121,7 @@ do_build() {
     _variant_config+=("--with-schannel")
     _variant_config+=('--without-nghttp2')
     _variant_config+=("--with-ca-bundle=${MINGW_PREFIX}/etc/ssl/certs/ca-bundle.crt")
-    _variant_config+=("--with-librtmp")
+    _variant_config+=("--without-librtmp")
   elif [ "${_variant}" = "-openssl" ]; then
     _variant_config+=("--with-default-ssl-backend=openssl")
     _variant_config+=("--with-openssl")
