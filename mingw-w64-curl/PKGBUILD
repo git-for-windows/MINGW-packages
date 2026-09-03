@@ -64,7 +64,7 @@ case "$WITHOUT_PDBS,$MSYSTEM" in
         pkgname+=("${MINGW_PACKAGE_PREFIX}-${_realname}-gnutls-pdb")
         pkgname+=("${MINGW_PACKAGE_PREFIX}-${_realname}-winssl-pdb")
 	makedepends+=("${MINGW_PACKAGE_PREFIX}-cv2pdb")
-	options+=('!strip')
+	options+=('debug' '!strip')
 	STRIP=cv2pdb
 	;;
 *)
