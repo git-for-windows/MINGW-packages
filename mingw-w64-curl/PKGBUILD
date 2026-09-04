@@ -87,8 +87,23 @@ prepare() {
 
   cd "${srcdir}/${_realname}-${pkgver}"
   cp -fHv "${srcdir}"/pathtools.[ch] lib/
-  sed -i '1i/* !checksrc! disable COPYRIGHT all */' lib/pathtools.c
-  sed -i '1i/* !checksrc! disable COPYRIGHT all */' lib/pathtools.h
+
+  cat >lib/.checksrc <<EOF
+disable ASSIGNWITHINCONDITION
+disable ASTERISKNOSPACE
+disable ASTERISKSPACE
+disable BANNEDFUNC
+disable BRACEELSE
+disable BRACEPOS
+disable COPYRIGHT
+disable EQUALSPACE
+disable IFDEFSINGLE
+disable INDENTATION
+disable LONGLINE
+disable PLUSNOSPACE
+disable SPACEBEFORECLOSE
+disable SPACEBEFOREPAREN
+EOF
 
   apply_patch_with_msg \
     0001-Make-cURL-relocatable.patch \
