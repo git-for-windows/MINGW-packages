@@ -107,7 +107,7 @@ then
 else
   pkgname+=("${MINGW_PACKAGE_PREFIX}-${_realname}-pdb")
   makedepends+=("${MINGW_PACKAGE_PREFIX}-cv2pdb")
-  options+=('!strip')
+  options+=('debug !strip')
   COMPAT_CFLAGS="-gdwarf-4 -gstrict-dwarf" # cv2pdb cannot really handle DWARF5 yet
   STRIP="${BASH_SOURCE%/*}/src/cv2pdb-strip"
 fi
