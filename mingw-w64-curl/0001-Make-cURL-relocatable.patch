@@ -1,4 +1,4 @@
-From 52a8eef5f56bf6980ed927b05218fd441a08132b Mon Sep 17 00:00:00 2001
+From 8a61681c3755f9d9b2631d063becb69132d0376d Mon Sep 17 00:00:00 2001
 From: Ray Donnelly <mingw.android@gmail.com>
 Date: Wed, 22 Feb 2017 11:03:04 +0100
 Subject: [PATCH 1/N] Make cURL relocatable
@@ -25,14 +25,14 @@ Signed-off-by: Johannes Schindelin <johannes.schindelin@gmx.de>
  configure.ac           |  2 ++
  lib/Makefile.inc       |  2 ++
  lib/curl_config.h.in   |  3 +++
- lib/vtls/vtls_config.c | 48 ++++++++++++++++++++++++++++++++++++++++++
- 4 files changed, 55 insertions(+)
+ lib/vtls/vtls_config.c | 47 ++++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 54 insertions(+)
 
 diff --git a/configure.ac b/configure.ac
-index a21847ea66..f3eb99c9d9 100644
+index 4c4fac2e2b..308fec9feb 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -4022,6 +4022,8 @@ AC_CHECK_HEADERS(
+@@ -4085,6 +4085,8 @@ AC_CHECK_HEADERS(
  ]
  )
  
@@ -42,10 +42,10 @@ index a21847ea66..f3eb99c9d9 100644
  AC_C_CONST
  AC_TYPE_SIZE_T
 diff --git a/lib/Makefile.inc b/lib/Makefile.inc
-index 266ba52af3..35c7a0fa72 100644
+index c4e26849aa..cf681e7711 100644
 --- a/lib/Makefile.inc
 +++ b/lib/Makefile.inc
-@@ -245,6 +245,7 @@ LIB_CFILES =         \
+@@ -258,6 +258,7 @@ LIB_CFILES =         \
    netrc.c            \
    openldap.c         \
    parsedate.c        \
@@ -53,7 +53,7 @@ index 266ba52af3..35c7a0fa72 100644
    peer.c             \
    pingpong.c         \
    pop3.c             \
-@@ -380,6 +381,7 @@ LIB_HFILES =         \
+@@ -391,6 +392,7 @@ LIB_HFILES =         \
    multiif.h          \
    netrc.h            \
    parsedate.h        \
@@ -62,7 +62,7 @@ index 266ba52af3..35c7a0fa72 100644
    pingpong.h         \
    pop3.h             \
 diff --git a/lib/curl_config.h.in b/lib/curl_config.h.in
-index 405ba1aa6c..709be83bae 100644
+index b486ae3272..0766e96adf 100644
 --- a/lib/curl_config.h.in
 +++ b/lib/curl_config.h.in
 @@ -2,6 +2,9 @@
@@ -76,10 +76,10 @@ index 405ba1aa6c..709be83bae 100644
  #undef CURL_CA_BUNDLE
  
 diff --git a/lib/vtls/vtls_config.c b/lib/vtls/vtls_config.c
-index 4a9b69654b..ee70c9a549 100644
+index 080d513bb5..e61e4d782c 100644
 --- a/lib/vtls/vtls_config.c
 +++ b/lib/vtls/vtls_config.c
-@@ -50,6 +50,9 @@
+@@ -46,6 +46,9 @@
  #include "vtls/vtls.h"
  #include "vtls/vtls_config.h"
  
@@ -89,9 +89,9 @@ index 4a9b69654b..ee70c9a549 100644
  
  #define CLONE_STRING(var)                    \
    do {                                       \
-@@ -260,6 +263,15 @@ CURLcode Curl_ssl_easy_config_complete(struct Curl_easy *data,
+@@ -251,6 +254,15 @@ CURLcode Curl_ssl_easy_config_complete(struct Curl_easy *data,
+   struct ssl_config_data *sslc = &data->set.ssl;
  #if defined(CURL_CA_PATH) || defined(CURL_CA_BUNDLE)
-   struct UserDefined *set = &data->set;
    CURLcode result;
 +#ifdef __MINGW32__
 +    const size_t path_max = PATH_MAX;
@@ -105,8 +105,8 @@ index 4a9b69654b..ee70c9a549 100644
  #endif
  
    ssl_easy_config_compl_options(origin, data->state.initial_origin, sslc);
-@@ -270,15 +282,41 @@ CURLcode Curl_ssl_easy_config_complete(struct Curl_easy *data,
-       sslc->native_ca_store = TRUE;
+@@ -261,15 +273,41 @@ CURLcode Curl_ssl_easy_config_complete(struct Curl_easy *data,
+       sslc->primary.native_ca_store = TRUE;
  #endif
  #ifdef CURL_CA_PATH
 +#ifdef __MINGW32__
@@ -118,11 +118,11 @@ index 4a9b69654b..ee70c9a549 100644
 +    free((void*)relative);
 +    simplify_path(relocated_ca_path);
 +#endif /* defined(__MINGW32__) */
-     if(!sslc->custom_capath && !set->str[STRING_SSL_CAPATH]) {
+     if(!sslc->custom_capath && !CURL_EASY_STR(data, STRING_SSL_CAPATH)) {
 +#ifdef __MINGW32__
-+      result = Curl_setstropt(&set->str[STRING_SSL_CAPATH], relocated_ca_path);
++      result = Curl_setstropt(data, STRING_SSL_CAPATH, relocated_ca_path);
 +#else
-       result = Curl_setstropt(&set->str[STRING_SSL_CAPATH], CURL_CA_PATH);
+       result = Curl_setstropt(data, STRING_SSL_CAPATH, CURL_CA_PATH);
 +#endif /* defined(__MINGW32__) */
        if(result)
          return result;
@@ -138,38 +138,36 @@ index 4a9b69654b..ee70c9a549 100644
 +    free((void*)relative);
 +    simplify_path(relocated_bundle);
 +#endif /* defined(__MINGW32__) */
-     if(!sslc->custom_cafile && !set->str[STRING_SSL_CAFILE]) {
+     if(!sslc->custom_cafile && !CURL_EASY_STR(data, STRING_SSL_CAFILE)) {
 +#ifdef __MINGW32__
-+      result = Curl_setstropt(&set->str[STRING_SSL_CAFILE], relocated_bundle);
++      result = Curl_setstropt(data, STRING_SSL_CAFILE, relocated_bundle);
 +#else
-       result = Curl_setstropt(&set->str[STRING_SSL_CAFILE], CURL_CA_BUNDLE);
+       result = Curl_setstropt(data, STRING_SSL_CAFILE, CURL_CA_BUNDLE);
 +#endif /* defined(__MINGW32__) */
        if(result)
          return result;
      }
-@@ -339,16 +377,26 @@ CURLcode Curl_ssl_easy_config_complete(struct Curl_easy *data,
- #endif
+@@ -324,7 +362,11 @@ CURLcode Curl_ssl_easy_config_complete(struct Curl_easy *data,
  #ifdef CURL_CA_PATH
-     if(!sslc->custom_capath && !set->str[STRING_SSL_CAPATH_PROXY]) {
+     if(!sslc->custom_capath &&
+        !CURL_EASY_STR(data, STRING_SSL_CAPATH_PROXY)) {
 +#ifdef __MINGW32__
-+      result = Curl_setstropt(&set->str[STRING_SSL_CAPATH_PROXY],
-+                              relocated_ca_path);
++      result = Curl_setstropt(data, STRING_SSL_CAPATH_PROXY, relocated_ca_path);
 +#else
-       result = Curl_setstropt(&set->str[STRING_SSL_CAPATH_PROXY],
-                               CURL_CA_PATH);
+       result = Curl_setstropt(data, STRING_SSL_CAPATH_PROXY, CURL_CA_PATH);
 +#endif /* defined(__MINGW32__) */
        if(result)
          return result;
      }
- #endif
+@@ -332,7 +374,12 @@ CURLcode Curl_ssl_easy_config_complete(struct Curl_easy *data,
  #ifdef CURL_CA_BUNDLE
-     if(!sslc->custom_cafile && !set->str[STRING_SSL_CAFILE_PROXY]) {
+     if(!sslc->custom_cafile &&
+        !CURL_EASY_STR(data, STRING_SSL_CAFILE_PROXY)) {
 +#ifdef __MINGW32__
-+      result = Curl_setstropt(&set->str[STRING_SSL_CAFILE_PROXY],
++      result = Curl_setstropt(data, STRING_SSL_CAFILE_PROXY,
 +                              relocated_bundle);
 +#else
-       result = Curl_setstropt(&set->str[STRING_SSL_CAFILE_PROXY],
-                               CURL_CA_BUNDLE);
+       result = Curl_setstropt(data, STRING_SSL_CAFILE_PROXY, CURL_CA_BUNDLE);
 +#endif /* defined(__MINGW32__) */
        if(result)
          return result;
