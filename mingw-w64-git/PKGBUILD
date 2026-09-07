@@ -153,7 +153,7 @@ build() {
   # stripped.
   export PATH="$MINGW_PREFIX/bin:$PATH"
   make -C contrib/credential/wincred clean &&
-  make -C contrib/credential/wincred &&
+  make -C contrib/credential/wincred CFLAGS="$CFLAGS $COMPAT_CFLAGS" &&
 
   targets= &&
   case "${pkgname[@]}" in ''|*-git|*-git\ *) targets="$targets all";; esac &&
