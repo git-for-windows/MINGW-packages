@@ -124,6 +124,8 @@ build() {
     STRIP_OPTS=--strip-debug
   else
     STRIP=cv2pdb
+    sed -i -e '/^[[:space:]]*\"mingw-common\"/,/release/ s/-O/-g &/' \
+      ${srcdir}/${_realname}-${pkgver}/Configurations/10-main.conf
   fi
   MSYS2_ARG_CONV_EXCL="--prefix=" \
   ../"${_realname}-${pkgver}"/Configure \
