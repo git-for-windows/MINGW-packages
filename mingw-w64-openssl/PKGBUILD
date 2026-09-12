@@ -4,7 +4,7 @@ _realname=openssl
 pkgbase=mingw-w64-${_realname}
 pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}"
 	"${MINGW_PACKAGE_PREFIX}-${_realname}-pdb")
-pkgver=3.5.7
+pkgver=3.5.8
 pkgrel=1
 pkgdesc="The Open Source toolkit for Secure Sockets Layer and Transport Layer Security (mingw-w64)"
 arch=('any')
@@ -30,7 +30,7 @@ source=("https://github.com/openssl/openssl/releases/download/openssl-${pkgver}/
         '0009-Also-treat-Cygwin-Perl-like-MSYS-Perl-in-test-skip-g.patch'
         'pathtools.c'
         'pathtools.h')
-sha256sums=('a8c0d28a529ca480f9f36cf5792e2cd21984552a3c8e4aa11a24aa31aeac98e8'
+sha256sums=('a8f84a39918ec6415ce765d9b429d313ba97b8143169c172e734b9514464f5b2'
             'SKIP'
             '8503b2d481e8392a67152d529cfbb01cc9b9c4a8d7a529b202f3a1a385058c34'
             'e64661d67c47c1f8b5a409a230fd5a7a97c5b9070ceeefdc469788cf85068c36'
@@ -41,8 +41,8 @@ sha256sums=('a8c0d28a529ca480f9f36cf5792e2cd21984552a3c8e4aa11a24aa31aeac98e8'
             '9a5c55ae51a8411034339ff9fc028cfb11337511957554b1681c1163160d82c8'
             '32a166a50fe916fb872be441bf7db1f56d67222b7b38ccfe5da394802f79eeac'
             '4f7c427058e5edc533c5c653ef5189e2b38998f4fb2e300f5db2675ed4bef5fb'
-            '08209cbf1633fa92eae7e5d28f95f8df9d6184cc20fa878c99aec4709bb257fd'
-            '965d3921ec4fdeec94a2718bc2c85ce5e1a00ea0e499330a554074a7ae15dfc6')
+            'ebf471173f5ee9c4416c10a78760cea8afaf1a4a6e653977321e8547ce7bf3c0'
+            '1585ef1b61cf53a2ca27049c11d49e0834683dfda798f03547761375df482a90')
 
 # https://www.openssl.org/community/otc.html
 validpgpkeys=(
@@ -52,6 +52,7 @@ validpgpkeys=(
   'B7C1C14360F353A36862E4D5231C84CDDCC69C45' # Paul Dale <pauli@openssl.org>
   'EFC0A467D613CB83C7ED6D30D894E2CE8B3D79F5' # OpenSSL Management Committee <openssl-omc@openssl.org>
   'BA5473A2B0587B07FB27CF2D216094DFD0CB81EF' # OpenSSL <openssl@openssl.org>
+  'B146647E45A7B33947AB226B2A2C87D161692D40' # OpenSSL <openssl@openssl.org>
 )
 
 # Helper macros to help make tasks easier #
@@ -92,14 +93,15 @@ prepare() {
 
   cp -fHv "${srcdir}"/pathtools.c crypto/
   cp -fHv "${srcdir}"/pathtools.h ./
+
+  msg2 "Using sed to force makepkg-mingw CFLAGS instead of hardcoded ones"
+  cd "${srcdir}/${_realname}-${pkgver}/Configurations"
+  sed -i -e "/^[[:space:]]*\"mingw-common\"/,/release/ s/-O3/${CFLAGS}/" 10-main.conf
+  grep -q --fixed-strings -- "${CFLAGS}" 10-main.conf  || { echo "...sed failed"; return 1; }
 }
 
 build() {
   mkdir -p "${srcdir}/build-${MSYSTEM}" && cd "${srcdir}/build-${MSYSTEM}"
-
-  # Use mingw cflags instead of hardcoded ones
-  sed -i -e '/^"mingw"/ s/-fomit-frame-pointer -O3 -Wall/-O2 -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions --param=ssp-buffer-size=4/' \
-    ${srcdir}/${_realname}-${pkgver}/Configurations/10-main.conf
 
   case "${CARCH}" in
     i?86)
@@ -122,6 +124,8 @@ build() {
     STRIP_OPTS=--strip-debug
   else
     STRIP=cv2pdb
+    sed -i -e '/^[[:space:]]*\"mingw-common\"/,/release/ s/-O/-g &/' \
+      ${srcdir}/${_realname}-${pkgver}/Configurations/10-main.conf
   fi
   MSYS2_ARG_CONV_EXCL="--prefix=" \
   ../"${_realname}-${pkgver}"/Configure \
@@ -185,6 +189,10 @@ package_mingw-w64-x86_64-openssl() {
   _package
 }
 
+package_mingw-w64-ucrt-x86_64-openssl() {
+  _package
+}
+
 package_mingw-w64-clang-aarch64-openssl() {
   _package
 }
@@ -194,6 +202,10 @@ package_mingw-w64-i686-openssl-pdb() {
 }
 
 package_mingw-w64-x86_64-openssl-pdb() {
+  _package pdb
+}
+
+package_mingw-w64-ucrt-x86_64-openssl-pdb() {
   _package pdb
 }
 
