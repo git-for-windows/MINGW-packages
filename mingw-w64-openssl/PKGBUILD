@@ -189,6 +189,10 @@ package_mingw-w64-x86_64-openssl() {
   _package
 }
 
+package_mingw-w64-ucrt-x86_64-openssl() {
+  _package
+}
+
 package_mingw-w64-clang-aarch64-openssl() {
   _package
 }
@@ -198,6 +202,10 @@ package_mingw-w64-i686-openssl-pdb() {
 }
 
 package_mingw-w64-x86_64-openssl-pdb() {
+  _package pdb
+}
+
+package_mingw-w64-ucrt-x86_64-openssl-pdb() {
   _package pdb
 }
 
