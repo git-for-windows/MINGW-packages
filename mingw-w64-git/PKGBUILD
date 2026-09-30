@@ -96,6 +96,16 @@ then
   done
   pkgname=("${pkgname[@]}")
 
+  for _index in "${!makedepends[@]}"
+  do
+    case "${makedepends[_index]#${MINGW_PACKAGE_PREFIX}-}" in
+    xmlto|docbook-xsl|docbook-xsl-ns|asciidoctor)
+      unset "makedepends[$_index]"
+      ;;
+    esac
+  done
+  makedepends=("${makedepends[@]}")
+
   # There is no i686 Rust we can use
   export NO_RUST=ThatsRight
 fi
