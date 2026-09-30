@@ -115,7 +115,7 @@ then
   makedepends+=("${MINGW_PACKAGE_PREFIX}-rust")
 fi
 
-if test -z "$WITH_PDBS"
+if test -z "$WITH_PDBS" || test i686 = "$CARCH"
 then
   options+=('strip')
 elif [[ "$MSYSTEM" == CLANG* ]]
