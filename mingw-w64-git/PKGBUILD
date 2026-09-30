@@ -85,6 +85,16 @@ LDFLAGS=
 
 if test i686 = "$CARCH"
 then
+  for _index in "${!pkgname[@]}"
+  do
+    case "${pkgname[_index]#${MINGW_PACKAGE_PREFIX}-}" in
+    git-perl|git-send-email|git-svn|git-archimport|git-cvs)
+      unset "pkgname[$_index]"
+      ;;
+    esac
+  done
+  pkgname=("${pkgname[@]}")
+
   # There is no i686 Rust we can use
   export NO_RUST=ThatsRight
 fi
@@ -558,10 +568,19 @@ post_remove () {
 package_git-for-windows-addons () {
   depends=("${MINGW_PACKAGE_PREFIX}-${_realname}=${pkgver}"
     "${MINGW_PACKAGE_PREFIX}-${_realname}-subtree"
-    "${MINGW_PACKAGE_PREFIX}-${_realname}-credential-wincred"
-    "${MINGW_PACKAGE_PREFIX}-${_realname}-send-email"
-    "${MINGW_PACKAGE_PREFIX}-gitk"
-    "${MINGW_PACKAGE_PREFIX}-${_realname}-gui")
+    "${MINGW_PACKAGE_PREFIX}-${_realname}-credential-wincred")
+  if test i686 = "$CARCH"
+  then
+    conflicts=("${MINGW_PACKAGE_PREFIX}-${_realname}-perl"
+               "${MINGW_PACKAGE_PREFIX}-${_realname}-send-email"
+               "${MINGW_PACKAGE_PREFIX}-${_realname}-svn"
+               "${MINGW_PACKAGE_PREFIX}-${_realname}-archimport"
+               "${MINGW_PACKAGE_PREFIX}-${_realname}-cvs")
+  else
+    depends+=("${MINGW_PACKAGE_PREFIX}-${_realname}-send-email")
+  fi
+  depends+=("${MINGW_PACKAGE_PREFIX}-gitk"
+            "${MINGW_PACKAGE_PREFIX}-${_realname}-gui")
   pkgdesc="Git for Windows extra executables and wrappers (mingw-w64)"
   install=${MINGW_PACKAGE_PREFIX}-git-for-windows-addons.install
 
