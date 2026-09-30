@@ -89,7 +89,7 @@ then
   do
     case "${pkgname[_index]#${MINGW_PACKAGE_PREFIX}-}" in
     git-perl|git-send-email|git-svn|git-archimport|git-cvs|\
-    gitk|git-gui|gitweb|git-doc-html|git-doc-man)
+    gitk|git-gui|gitweb|git-doc-html|git-doc-man|git-p4)
       unset "pkgname[$_index]"
       ;;
     esac
@@ -592,7 +592,8 @@ package_git-for-windows-addons () {
                "${MINGW_PACKAGE_PREFIX}-${_realname}-cvs"
                "${MINGW_PACKAGE_PREFIX}-gitk"
                "${MINGW_PACKAGE_PREFIX}-${_realname}-gui"
-               "${MINGW_PACKAGE_PREFIX}-gitweb")
+               "${MINGW_PACKAGE_PREFIX}-gitweb"
+               "${MINGW_PACKAGE_PREFIX}-${_realname}-p4")
   else
     depends+=("${MINGW_PACKAGE_PREFIX}-${_realname}-send-email"
               "${MINGW_PACKAGE_PREFIX}-gitk"
