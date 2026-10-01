@@ -85,6 +85,27 @@ LDFLAGS=
 
 if test i686 = "$CARCH"
 then
+  for _index in "${!pkgname[@]}"
+  do
+    case "${pkgname[_index]#${MINGW_PACKAGE_PREFIX}-}" in
+    git-perl|git-send-email|git-svn|git-archimport|git-cvs|\
+    gitk|git-gui|gitweb|git-doc-html|git-doc-man|git-p4)
+      unset "pkgname[$_index]"
+      ;;
+    esac
+  done
+  pkgname=("${pkgname[@]}")
+
+  for _index in "${!makedepends[@]}"
+  do
+    case "${makedepends[_index]#${MINGW_PACKAGE_PREFIX}-}" in
+    xmlto|docbook-xsl|docbook-xsl-ns|asciidoctor)
+      unset "makedepends[$_index]"
+      ;;
+    esac
+  done
+  makedepends=("${makedepends[@]}")
+
   # There is no i686 Rust we can use
   export NO_RUST=ThatsRight
 fi
@@ -94,7 +115,7 @@ then
   makedepends+=("${MINGW_PACKAGE_PREFIX}-rust")
 fi
 
-if test -z "$WITH_PDBS"
+if test -z "$WITH_PDBS" || test i686 = "$CARCH"
 then
   options+=('strip')
 elif [[ "$MSYSTEM" == CLANG* ]]
@@ -324,9 +345,12 @@ package_git-subtree () {
 
   cd "$srcdir"/git
 
-  make -C contrib/subtree prefix="$pkgdir/$MINGW_PREFIX" install
-  make -C contrib/subtree prefix="$pkgdir/$MINGW_PREFIX" install-man
-  make -C contrib/subtree prefix="$pkgdir/$MINGW_PREFIX" install-html
+  make -C contrib/subtree prefix="$pkgdir/$MINGW_PREFIX" install || return
+  if test i686 != "$CARCH"
+  then
+    make -C contrib/subtree prefix="$pkgdir/$MINGW_PREFIX" install-man &&
+    make -C contrib/subtree prefix="$pkgdir/$MINGW_PREFIX" install-html
+  fi
 }
 
 package_git-credential-wincred () {
@@ -558,10 +582,23 @@ post_remove () {
 package_git-for-windows-addons () {
   depends=("${MINGW_PACKAGE_PREFIX}-${_realname}=${pkgver}"
     "${MINGW_PACKAGE_PREFIX}-${_realname}-subtree"
-    "${MINGW_PACKAGE_PREFIX}-${_realname}-credential-wincred"
-    "${MINGW_PACKAGE_PREFIX}-${_realname}-send-email"
-    "${MINGW_PACKAGE_PREFIX}-gitk"
-    "${MINGW_PACKAGE_PREFIX}-${_realname}-gui")
+    "${MINGW_PACKAGE_PREFIX}-${_realname}-credential-wincred")
+  if test i686 = "$CARCH"
+  then
+    conflicts=("${MINGW_PACKAGE_PREFIX}-${_realname}-perl"
+               "${MINGW_PACKAGE_PREFIX}-${_realname}-send-email"
+               "${MINGW_PACKAGE_PREFIX}-${_realname}-svn"
+               "${MINGW_PACKAGE_PREFIX}-${_realname}-archimport"
+               "${MINGW_PACKAGE_PREFIX}-${_realname}-cvs"
+               "${MINGW_PACKAGE_PREFIX}-gitk"
+               "${MINGW_PACKAGE_PREFIX}-${_realname}-gui"
+               "${MINGW_PACKAGE_PREFIX}-gitweb"
+               "${MINGW_PACKAGE_PREFIX}-${_realname}-p4")
+  else
+    depends+=("${MINGW_PACKAGE_PREFIX}-${_realname}-send-email"
+              "${MINGW_PACKAGE_PREFIX}-gitk"
+              "${MINGW_PACKAGE_PREFIX}-${_realname}-gui")
+  fi
   pkgdesc="Git for Windows extra executables and wrappers (mingw-w64)"
   install=${MINGW_PACKAGE_PREFIX}-git-for-windows-addons.install
 
@@ -588,14 +625,20 @@ package_git-for-windows-addons () {
   install -m755 cmd/git.exe $pkgdir/cmd/scalar.exe
 
   # Install builtins.txt
-  install -m644 builtins.txt $pkgdir$SHAREDIR
+  install -m644 builtins.txt $pkgdir$SHAREDIR || return
 
-  # Install documentation
-  install -d -m755 "$pkgdir/$MINGW_PREFIX/share/man/man1"
-  install -m644 Documentation/git-bash.1 "$pkgdir/$MINGW_PREFIX/share/man/man1/"
-  install -d -m755 "$pkgdir/$MINGW_PREFIX/share/doc/git-doc"
-  install -m644 Documentation/git-bash.adoc "$pkgdir/$MINGW_PREFIX/share/doc/git-doc/"
-  install -m644 Documentation/git-bash.html "$pkgdir/$MINGW_PREFIX/share/doc/git-doc/"
+  if test i686 != "$CARCH"
+  then
+    # Install documentation
+    install -d -m755 "$pkgdir/$MINGW_PREFIX/share/man/man1"
+    install -m644 Documentation/git-bash.1 \
+      "$pkgdir/$MINGW_PREFIX/share/man/man1/"
+    install -d -m755 "$pkgdir/$MINGW_PREFIX/share/doc/git-doc"
+    install -m644 Documentation/git-bash.adoc \
+      "$pkgdir/$MINGW_PREFIX/share/doc/git-doc/"
+    install -m644 Documentation/git-bash.html \
+      "$pkgdir/$MINGW_PREFIX/share/doc/git-doc/"
+  fi
 }
 
 package_git-pdb () {
