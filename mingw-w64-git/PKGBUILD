@@ -613,6 +613,14 @@ package_git-for-windows-addons () {
   # Compatibility Bash, git-wrapper.exe
   install -m755 compat-bash.exe git-wrapper.exe $pkgdir$SHAREDIR
 
+  # Opt in with WITH_MINGW64_GCM_WRAPPER=1 for pre-UCRT64 GCM paths.
+  if test UCRT64 = "$MSYSTEM" &&
+     test -n "$WITH_MINGW64_GCM_WRAPPER"
+  then
+    install -D -m755 git-wrapper.exe \
+      "$pkgdir/mingw64/bin/git-credential-manager.exe" || return
+  fi
+
   # Install Git wrapper into /cmd/
   install -d -m755 $pkgdir/cmd
   install -m755 cmd/git.exe cmd/gitk.exe cmd/git-gui.exe \
