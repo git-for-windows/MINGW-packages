@@ -699,6 +699,8 @@ int main(void)
 		wcscpy(exe, top_level_path);
 		my_path_append(exe, msystem_bin, MAX_PATH);
 		my_path_append(exe, basename, MAX_PATH);
+		fwprintf(stderr, L"warning: '%s' is a deprecated path; "
+				L"use '%s' instead\n", exe_bup, exe);
 		swprintf(buffer, MAX_PATH + 2, L"\"%s\"", exe);
 		prefix_args = buffer;
 		prefix_args_len = wcslen(buffer);
