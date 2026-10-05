@@ -6,7 +6,7 @@ pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}"
          "${MINGW_PACKAGE_PREFIX}-${_realname}-gnutls"
          "${MINGW_PACKAGE_PREFIX}-${_realname}-winssl")
 pkgver=8.22.0
-pkgrel=1
+pkgrel=2
 pkgdesc="Command line tool and library for transferring data with URLs (mingw-w64)"
 arch=('any')
 mingw_arch=('mingw32' 'mingw64' 'ucrt64' 'clang64' 'clang32' 'clangarm64')
@@ -34,13 +34,15 @@ source=("https://github.com/curl/curl/releases/download/${_realname}-${pkgver//.
         "pathtools.c"
         "pathtools.h"
         "0001-Make-cURL-relocatable.patch"
-        "0002-Hack-make-relocation-work-inside-libexec-git-core-an.patch")
+        "0002-Hack-make-relocation-work-inside-libexec-git-core-an.patch"
+        "f2587854f9d7ff84fbae92a992a92bd89e80b562.patch")
 sha256sums=('5d956a6a22b3c279f50c421ee5d3c9e9d660cb6f115dcf881b579e952130549c'
             'SKIP'
             'ebf471173f5ee9c4416c10a78760cea8afaf1a4a6e653977321e8547ce7bf3c0'
             '1585ef1b61cf53a2ca27049c11d49e0834683dfda798f03547761375df482a90'
             'f2a74ed774642fae3ca1a1302355b4a02604fca3ece29d405e44d7208de50e59'
-            'a8c612c0f9d7ca984d1b3507bdc07cb69f6d396108b9ec1438e10a41778bec9a')
+            'a8c612c0f9d7ca984d1b3507bdc07cb69f6d396108b9ec1438e10a41778bec9a'
+            '903591fe87ffe5e751b86ee4896c178eef90f7ad5bcc41b87ce675f956c0e954')
 validpgpkeys=('27EDEAF22F3ABCEB50DB9A125CC908FDB71E12C2')  # Daniel Stenberg
 
 if test -z "$WITHOUT_ALTERNATES"
@@ -66,6 +68,7 @@ case "$WITHOUT_PDBS,$MSYSTEM" in
 	makedepends+=("${MINGW_PACKAGE_PREFIX}-cv2pdb")
 	options+=('debug' '!strip')
 	STRIP=cv2pdb
+	GENTLE_DEBUGASSERT=t
 	;;
 *)
 	options+=('strip')
@@ -108,6 +111,17 @@ EOF
   apply_patch_with_msg \
     0001-Make-cURL-relocatable.patch \
     0002-Hack-make-relocation-work-inside-libexec-git-core-an.patch \
+    f2587854f9d7ff84fbae92a992a92bd89e80b562.patch \
+
+  test -z "$GENTLE_DEBUGASSERT" || {
+    # define `CURL_DEBUGASSERT()` to not abort
+    grep -q '^#define CURL_DEBUGASSERT' lib/curl_setup.h ||
+    sed -i '/^#ifdef CURL_DEBUGASSERT/i\
+#undef CURL_DEBUGASSERT\
+#define CURL_DEBUGASSERT(cond) ((void)((cond) || \\\
+  fprintf(stderr, "Assertion failed: %s, file %s, line %d\\n",\\\
+    #cond, __FILE__, __LINE__)))' lib/curl_setup.h
+  }
 
   autoreconf -vfi
 }
