@@ -1,0 +1,42 @@
+From f2587854f9d7ff84fbae92a992a92bd89e80b562 Mon Sep 17 00:00:00 2001
+From: Johannes Schindelin <johannes.schindelin@gmx.de>
+Date: Mon, 5 Oct 2026 09:22:47 +0200
+Subject: [PATCH] schannel: handle empty tokens during renegotiation
+
+Renegotiation can enter handshake step 2 without buffered input, causing
+a zero-size allocation that trips curl's debug allocator assertion.
+Allow this valid empty-token case without changing the logical SSPI length.
+
+Assisted-by: GPT-6.1 Sol
+Signed-off-by: Johannes Schindelin <johannes.schindelin@gmx.de>
+---
+ lib/vtls/schannel.c | 7 ++-----
+ 1 file changed, 2 insertions(+), 5 deletions(-)
+
+diff --git a/lib/vtls/schannel.c b/lib/vtls/schannel.c
+index c95e373aab..312d86ea31 100644
+--- a/lib/vtls/schannel.c
++++ b/lib/vtls/schannel.c
+@@ -1320,7 +1320,8 @@ static CURLcode schannel_connect_step2(struct Curl_cfilter *cf,
+ 
+     /* setup input buffers */
+     InitSecBuffer(&inbuf[0], SECBUFFER_TOKEN,
+-                  curlx_malloc(backend->encdata.offset),
++                  curlx_memdup0((const char *)backend->encdata.buffer,
++                                backend->encdata.offset),
+                   curlx_uztoul(backend->encdata.offset));
+     InitSecBuffer(&inbuf[1], SECBUFFER_EMPTY, NULL, 0);
+     InitSecBufferDesc(&inbuf_desc, inbuf, 2);
+@@ -1336,10 +1337,6 @@ static CURLcode schannel_connect_step2(struct Curl_cfilter *cf,
+       return CURLE_OUT_OF_MEMORY;
+     }
+ 
+-    /* copy received handshake data into input buffer */
+-    memcpy(inbuf[0].pvBuffer, backend->encdata.buffer,
+-           backend->encdata.offset);
+-
+     /* The socket must be writable (or a poll error occurred) before we call
+        InitializeSecurityContext to continue processing the received TLS
+        records. This is because that function is not idempotent and we do not
+-- 
+
