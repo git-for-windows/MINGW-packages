@@ -66,6 +66,7 @@ case "$WITHOUT_PDBS,$MSYSTEM" in
 	makedepends+=("${MINGW_PACKAGE_PREFIX}-cv2pdb")
 	options+=('debug' '!strip')
 	STRIP=cv2pdb
+	GENTLE_DEBUGASSERT=t
 	;;
 *)
 	options+=('strip')
@@ -108,6 +109,16 @@ EOF
   apply_patch_with_msg \
     0001-Make-cURL-relocatable.patch \
     0002-Hack-make-relocation-work-inside-libexec-git-core-an.patch \
+
+  test -z "$GENTLE_DEBUGASSERT" || {
+    # define `CURL_DEBUGASSERT()` to not abort
+    grep -q '^#define CURL_DEBUGASSERT' lib/curl_setup.h ||
+    sed -i '/^#ifdef CURL_DEBUGASSERT/i\
+#undef CURL_DEBUGASSERT\
+#define CURL_DEBUGASSERT(cond) ((void)((cond) || \\\
+  fprintf(stderr, "Assertion failed: %s, file %s, line %d\\n",\\\
+    #cond, __FILE__, __LINE__)))' lib/curl_setup.h
+  }
 
   autoreconf -vfi
 }
