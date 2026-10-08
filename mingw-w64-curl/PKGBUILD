@@ -175,6 +175,7 @@ do_build() {
     --without-random \
     --disable-static \
     --enable-shared \
+    --enable-windows-unicode \
     --enable-sspi \
     --enable-ldap \
     --enable-ldaps \
