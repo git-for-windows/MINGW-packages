@@ -108,11 +108,18 @@ inside the package directory and use it to rebase the patches:
    mismatched committer date there changes the OID of every
    descendant. If any lines appear, fix them with:
 
-       git fast-export --no-data HEAD | \
+       git fast-export --no-data refs/tags/<base-tag> HEAD | \
          awk '/^author /{a=$0} /^committer /{$0="committer " substr(a,8)} 1' | \
          git fast-import --force --quiet
 
    Then update the tag and branch ref (`git checkout <branch>`).
+   Note that `<base-tag>` (the new tarball's import commit) is
+   passed to `fast-export` alongside `HEAD`. Without it, the tag
+   keeps pointing at the pre-rewrite import commit, so step 6's
+   `format-patch <base-tag>..HEAD` ends up emitting the multi-MB
+   tarball-import as a spurious patch 0001. Listing the tag here
+   makes `fast-import` recreate it pointing at the rewritten
+   import commit.
 6. `git format-patch --no-signature -o ../.. <base-tag>` to export
    back to the PKGBUILD directory.
 7. Verify the round-trip: re-export `format-patch` from the
