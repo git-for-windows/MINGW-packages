@@ -115,9 +115,16 @@ then
   makedepends+=("${MINGW_PACKAGE_PREFIX}-rust")
 fi
 
+# i686 builds do not produce PDBs, even when requested.
 if test -z "$WITH_PDBS" || test i686 = "$CARCH"
 then
-  options+=('strip')
+  if test -n "${SIGNTOOL:-}"
+  then
+    # makepkg strips after build(), which would invalidate our signatures.
+    options+=('!strip')
+  else
+    options+=('strip')
+  fi
 elif [[ "$MSYSTEM" == CLANG* ]]
 then
   pkgname+=("${MINGW_PACKAGE_PREFIX}-${_realname}-pdb")
@@ -197,6 +204,14 @@ build() {
   esac &&
   case " $targets " in
   *" all "*)
+    if test -n "${SIGNTOOL:-}" && [[ "${pkgname[*]}" != *-pdb* ]]
+    then
+      # Strip non-PDB executables before signing. PDB builds already ran
+      # strip-all above, using cv2pdb-strip or llvm-strip --strip-debug.
+      make -f ../mingw-w64-git.mak strip-all &&
+      strip edit-git-bash.exe ||
+      return 1
+    fi &&
     make -f ../mingw-w64-git.mak sign-executables &&
     make -f ../mingw-w64-git.mak print-builtins | tr ' ' '\n' > builtins.txt
     ;;
