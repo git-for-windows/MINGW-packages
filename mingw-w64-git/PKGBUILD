@@ -128,10 +128,11 @@ then
 elif [[ "$MSYSTEM" == CLANG* ]]
 then
   pkgname+=("${MINGW_PACKAGE_PREFIX}-${_realname}-pdb")
-  options+=('!strip')
+  options+=('debug' '!strip')
+  COMPAT_CFLAGS="-gcodeview -fdebug-compilation-dir=."
   STRIP=llvm-strip
   STRIP_OPTS=--strip-debug
-  LDFLAGS="-Wl,-pdb=" # Ensures that Clang generates PDB files
+  LDFLAGS="-Wl,-pdb=,-Xlink=-pdbsourcepath:." # Ensures that Clang generates PDB files
 else
   pkgname+=("${MINGW_PACKAGE_PREFIX}-${_realname}-pdb")
   makedepends+=("${MINGW_PACKAGE_PREFIX}-cv2pdb")
