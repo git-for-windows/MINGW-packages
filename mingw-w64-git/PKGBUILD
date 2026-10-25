@@ -692,6 +692,13 @@ verify_authenticode_signatures () {
   )
 }
 
+# makepkg strips after package_*() returns, before lint_package().
+if _func="$(declare -f lint_package)"
+then
+  _func="${_func/\{/$'{\n    verify_authenticode_signatures || return 1\n'}"
+  eval "$_func"
+fi
+
 # template start; name=mingw-w64-splitpkg-wrappers; version=1.0;
 # vim: set ft=bash :
 
@@ -699,7 +706,6 @@ verify_authenticode_signatures () {
 for _name in "${pkgname[@]}"; do
   _short="package_${_name#${MINGW_PACKAGE_PREFIX}-}"
   _func="$(declare -f "${_short}")"
-  _func="${_func%\}}"$'\n  verify_authenticode_signatures\n}'
   eval "${_func/#${_short}/package_${_name}}"
 done
 # template end;
