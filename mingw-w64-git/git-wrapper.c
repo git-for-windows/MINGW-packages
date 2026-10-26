@@ -9,8 +9,6 @@
 #define UNICODE
 #define _UNICODE
 #include <windows.h>
-#include <shlwapi.h>
-#include <shellapi.h>
 #include <stdio.h>
 #include <wchar.h>
 #include <stdbool.h>
@@ -20,6 +18,149 @@
 #define MAX_PATH 4096
 
 static WCHAR msystem_bin[64];
+
+/*
+ * The helpers below replace LoadStringW (user32), CommandLineToArgvW
+ * (shell32) and PathRemoveFileSpecW (shlwapi). Linking only against
+ * kernel32 and the C runtime keeps those DLLs, and the GDI stack that
+ * user32 brings in, out of every launcher process.
+ */
+
+/* Like LoadStringW(NULL, id, buf, size): length copied, 0 if none. */
+static int load_string(UINT id, LPWSTR buf, int size)
+{
+	HRSRC res = FindResourceW(NULL, MAKEINTRESOURCEW(id / 16 + 1),
+				  (LPCWSTR)RT_STRING);
+	const WCHAR *p, *end;
+	HGLOBAL data;
+	UINT i;
+	int len;
+
+	if (!res || !(data = LoadResource(NULL, res)) ||
+	    !(p = LockResource(data)))
+		return 0;
+	end = p + SizeofResource(NULL, res) / sizeof(WCHAR);
+	for (i = 0; i < id % 16; i++) {
+		if (p >= end)
+			return 0;
+		p += 1 + *p;
+	}
+	if (p >= end || !*p || size < 1)
+		return 0;
+	len = *p < size - 1 ? *p : size - 1;
+	memcpy(buf, p + 1, len * sizeof(WCHAR));
+	buf[len] = L'\0';
+	return len;
+}
+
+/* Like PathRemoveFileSpecW() for the absolute paths used here. */
+static int remove_last_component(LPWSTR path)
+{
+	LPWSTR slash = wcsrchr(path, L'\\');
+
+	if (!slash) {
+		if (!*path)
+			return 0;
+		*path = L'\0';
+		return 1;
+	}
+	/* keep the root of "C:\file" and "\file" */
+	if ((slash == path + 2 && path[1] == L':') || slash == path) {
+		if (!slash[1])
+			return 0;
+		slash[1] = L'\0';
+		return 1;
+	}
+	*slash = L'\0';
+	return 1;
+}
+
+/*
+ * Split a command line the way CommandLineToArgvW() does. The first
+ * argument follows the program-name rule (quotes only, no escapes).
+ * The others follow the backslash/quote rules, where "" inside quotes
+ * is a literal quote that also ends the quoted part. Release the result
+ * with LocalFree().
+ */
+static LPWSTR *split_command_line(LPCWSTR cmdline, int *argc)
+{
+	size_t len = wcslen(cmdline), max_args = len / 2 + 2;
+	LPWSTR *argv, out;
+	LPCWSTR p = cmdline;
+	int n = 0;
+
+	argv = LocalAlloc(LMEM_FIXED, max_args * sizeof(LPWSTR) +
+			  (len + 1 + max_args) * sizeof(WCHAR) + MAX_PATH * sizeof(WCHAR));
+	if (!argv) {
+		*argc = 0;
+		return NULL;
+	}
+	out = (LPWSTR)(argv + max_args);
+
+	if (!*p) {
+		argv[n++] = out;
+		GetModuleFileNameW(NULL, out, MAX_PATH);
+		argv[n] = NULL;
+		*argc = n;
+		return argv;
+	}
+
+	argv[n++] = out;
+	if (*p == L'"') {
+		for (p++; *p && *p != L'"'; )
+			*out++ = *p++;
+		if (*p == L'"')
+			p++;
+	} else {
+		while (*p && *p != L' ' && *p != L'\t')
+			*out++ = *p++;
+	}
+	*out++ = L'\0';
+
+	for (;;) {
+		int in_quotes = 0;
+
+		while (*p == L' ' || *p == L'\t')
+			p++;
+		if (!*p)
+			break;
+		argv[n++] = out;
+		while (*p && (in_quotes || (*p != L' ' && *p != L'\t'))) {
+			size_t backslashes = 0;
+
+			while (*p == L'\\') {
+				backslashes++;
+				p++;
+			}
+			if (*p == L'"') {
+				while (backslashes >= 2) {
+					*out++ = L'\\';
+					backslashes -= 2;
+				}
+				if (backslashes) {
+					*out++ = L'"';
+					p++;
+				} else if (in_quotes && p[1] == L'"') {
+					*out++ = L'"';
+					in_quotes = 0;
+					p += 2;
+				} else {
+					in_quotes = !in_quotes;
+					p++;
+				}
+			} else {
+				while (backslashes--)
+					*out++ = L'\\';
+				if (*p && (in_quotes || (*p != L' ' && *p != L'\t')))
+					*out++ = *p++;
+			}
+		}
+		*out++ = L'\0';
+	}
+	argv[n] = NULL;
+	*argc = n;
+	return argv;
+}
 
 static void print_error(LPCWSTR prefix, DWORD error_number)
 {
@@ -222,7 +363,7 @@ static LPWSTR fixup_commandline(LPWSTR exepath, LPWSTR *exep, int *wait,
 	size_t alloc;
 
 	cmdline = GetCommandLineW();
-	wargv = CommandLineToArgvW(cmdline, &wargc);
+	wargv = split_command_line(cmdline, &wargc);
 	alloc = sizeof(WCHAR) * (wcslen(cmdline) + prefix_args_len + 1
 				 + MAX_PATH + append_quote_to_cmdline);
 	cmd = (LPWSTR)malloc(alloc);
@@ -332,7 +473,7 @@ static void extract_first_arg(LPWSTR command_line, LPWSTR exepath, LPWSTR buf)
 	LPWSTR *wargv;
 	int wargc;
 
-	wargv = CommandLineToArgvW(command_line, &wargc);
+	wargv = split_command_line(command_line, &wargc);
 	if (wargc < 1) {
 		fwprintf(stderr, L"Invalid command-line: '%s'\n", command_line);
 		exit(1);
@@ -445,7 +586,7 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 		no_hide = -1;
 		append_quote = 0;
 		app_id = NULL;
-		len = LoadString(NULL, id, buf, BUFSIZE);
+		len = load_string(id, buf, BUFSIZE);
 
 		if (!len) {
 			if (!id)
@@ -512,7 +653,7 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 	*prefix_args_len = wcslen(buf2);
 
 	*is_git_command = 0;
-	wargv = CommandLineToArgvW(GetCommandLineW(), &wargc);
+	wargv = split_command_line(GetCommandLineW(), &wargc);
 	for (i = 1; i < wargc; i++) {
 		if (!wcscmp(L"--no-cd", wargv[i]))
 			*working_directory = NULL;
@@ -603,7 +744,7 @@ static void initialize_top_level_path(LPWSTR top_level_path, LPWSTR exepath,
 			}
 		}
 
-		if (!PathRemoveFileSpec(top_level_path)) {
+		if (!remove_last_component(top_level_path)) {
 			fwprintf(stderr, L"Invalid executable path: %s\n",
 					exepath);
 			ExitProcess(1);
@@ -675,7 +816,7 @@ int main(void)
 	/* GetModuleFileName(NULL, exepath, MAX_PATH); */
 	find_exe_realpath(exepath, MAX_PATH);
 	wcscpy(exe_bup, exepath);
-	if (!PathRemoveFileSpec(exepath)) {
+	if (!remove_last_component(exepath)) {
 		fwprintf(stderr, L"Invalid executable path: %s\n", exepath);
 		ExitProcess(1);
 	}
