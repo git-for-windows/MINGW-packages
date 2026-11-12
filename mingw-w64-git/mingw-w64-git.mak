@@ -2,7 +2,7 @@ include Makefile
 
 git-wrapper$(X): git-wrapper.o git.res
 	$(QUIET_LINK)$(CC) $(ALL_LDFLAGS) $(COMPAT_CFLAGS) \
-		-fno-stack-protector -Wall -o $@ $^ -lshell32 -lshlwapi
+		-fno-stack-protector -Wall -o $@ $^
 
 git-wrapper.o: %.o: ../%.c GIT-PREFIX
 	$(QUIET_CC)$(CC) $(ALL_CFLAGS) $(COMPAT_CFLAGS) \
@@ -26,7 +26,7 @@ git-bash.exe git-cmd.exe compat-bash.exe cmd/tig.exe \
 cmd/git.exe cmd/git-receive-pack.exe cmd/git-upload-pack.exe cmd/gitk.exe cmd/git-gui.exe: \
 		%.exe: git-wrapper.o git.res
 	@mkdir -p cmd
-	$(QUIET_LINK)$(CC) $(ALL_LDFLAGS) $(COMPAT_CFLAGS) -o $@ $^ -lshlwapi
+	$(QUIET_LINK)$(CC) $(ALL_LDFLAGS) $(COMPAT_CFLAGS) -o $@ $^
 
 edit-git-bash$(X): edit-git-bash.o
 	$(QUIET_LINK)$(CC) $(ALL_LDFLAGS) $(COMPAT_CFLAGS) \
