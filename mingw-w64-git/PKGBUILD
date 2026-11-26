@@ -144,6 +144,8 @@ SHAREDIR=$MINGW_PREFIX/share/git
 _DEFAULT_EDITOR="${_DEFAULT_EDITOR:-nano}"
 
 prepare () {
+  local rust_version
+
   cd "$srcdir/git" &&
 
   cat >config.mak <<-EOF
@@ -154,6 +156,15 @@ prepare () {
 	LDFLAGS = $LDFLAGS
 	DEFAULT_EDITOR = $_DEFAULT_EDITOR
 	EOF
+
+  if test -z "$NO_RUST" && test -f src/sha1dc_rs.rs &&
+     rust_version=$(rustc --version |
+       sed -n 's/^rustc \([0-9][0-9.]*\) .*/\1/p') &&
+     test -n "$rust_version" &&
+     printf '%s\n' 1.87.0 "$rust_version" | sort -VC
+  then
+    echo 'DC_SHA1_RS = 1' >>config.mak || return
+  fi
 
   cp ../git-bash.adoc Documentation/
 }
